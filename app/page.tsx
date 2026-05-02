@@ -122,6 +122,7 @@ export default function Home() {
                 id: runIdRef.current,
                 timestamp: Date.now(),
                 sources: selectedSources,
+                focus: focusToSend,
                 summary: summaryData,
                 themes: themesRef.current,
                 ideas: [],

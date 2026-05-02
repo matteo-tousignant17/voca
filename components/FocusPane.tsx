@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Clock, Trash2, Zap } from "lucide-react";
-import { loadHistory, clearHistory, type HistoryRun } from "@/lib/history";
+import { useHistory } from "@/context/HistoryContext";
 
 const FOCUS_OPTIONS = [
   {
@@ -78,6 +77,11 @@ function formatARR(n: number): string {
   return `$${n}`;
 }
 
+function focusLabel(focus: string | undefined): string {
+  if (!focus || focus === "general") return "General synthesis";
+  return FOCUS_OPTIONS.find((f) => f.prompt === focus)?.label ?? "Custom";
+}
+
 type Props = {
   selectedFocus: string;
   customFocus: string;
@@ -88,16 +92,7 @@ type Props = {
 };
 
 export default function FocusPane({ selectedFocus, customFocus, onSelectFocus, onCustomFocus, onRun, disabled }: Props) {
-  const [history, setHistory] = useState<HistoryRun[]>([]);
-
-  useEffect(() => {
-    setHistory(loadHistory());
-  }, []);
-
-  const handleClearHistory = () => {
-    clearHistory();
-    setHistory([]);
-  };
+  const { history, clearHistory } = useHistory();
 
   return (
     <div className="flex flex-col h-full bg-[#0c0c0e] overflow-y-auto">
@@ -173,7 +168,7 @@ export default function FocusPane({ selectedFocus, customFocus, onSelectFocus, o
               <span className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider">Recent runs</span>
             </div>
             <button
-              onClick={handleClearHistory}
+              onClick={clearHistory}
               className="text-[10px] text-gray-700 hover:text-gray-500 flex items-center gap-1 transition-colors"
             >
               <Trash2 size={10} />
@@ -181,29 +176,32 @@ export default function FocusPane({ selectedFocus, customFocus, onSelectFocus, o
             </button>
           </div>
           <div className="px-3 space-y-1">
-            {history.slice(0, 6).map((run) => (
-              <div
-                key={run.id}
-                className="px-3 py-2.5 rounded-lg border border-white/[0.04] bg-white/[0.02] hover:bg-white/[0.04] transition-colors cursor-default"
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px] text-gray-400 font-medium truncate max-w-[140px]">
-                    {run.focus === "general" ? "General synthesis" : FOCUS_OPTIONS.find(f => f.prompt === run.focus)?.label ?? "Custom"}
-                  </span>
-                  <span className="text-[10px] text-gray-600 shrink-0 ml-2">{formatRelTime(run.timestamp)}</span>
+            {history.slice(0, 6).map((run) => {
+              const topTheme = run.themes[0]?.theme_name ?? "";
+              return (
+                <div
+                  key={run.id}
+                  className="px-3 py-2.5 rounded-lg border border-white/[0.04] bg-white/[0.02] hover:bg-white/[0.04] transition-colors cursor-default"
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[11px] text-gray-400 font-medium truncate max-w-[140px]">
+                      {focusLabel(run.focus)}
+                    </span>
+                    <span className="text-[10px] text-gray-600 shrink-0 ml-2">{formatRelTime(run.timestamp)}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-[10px] text-gray-600">
+                    <span>{run.summary.total_themes} themes</span>
+                    <span className="text-gray-700">·</span>
+                    <span className="text-rose-500/70">{formatARR(run.summary.total_arr_at_risk)} at risk</span>
+                    <span className="text-gray-700">·</span>
+                    <span className="truncate">{run.sources.join(", ")}</span>
+                  </div>
+                  {topTheme && (
+                    <p className="text-[10px] text-gray-600 mt-0.5 truncate">Top: {topTheme}</p>
+                  )}
                 </div>
-                <div className="flex items-center gap-2 text-[10px] text-gray-600">
-                  <span>{run.theme_count} themes</span>
-                  <span className="text-gray-700">·</span>
-                  <span className="text-rose-500/70">{formatARR(run.arr_at_risk)} at risk</span>
-                  <span className="text-gray-700">·</span>
-                  <span className="truncate">{run.sources.join(", ")}</span>
-                </div>
-                {run.top_theme && (
-                  <p className="text-[10px] text-gray-600 mt-0.5 truncate">Top: {run.top_theme}</p>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

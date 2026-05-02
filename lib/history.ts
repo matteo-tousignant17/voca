@@ -5,6 +5,7 @@ export type HistoryEntry = {
   id: string;
   timestamp: number;
   sources: string[];
+  focus?: string;
   summary: {
     total_themes: number;
     total_arr_at_risk: number;

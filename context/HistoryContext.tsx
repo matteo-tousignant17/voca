@@ -8,6 +8,7 @@ type HistoryContextValue = {
   history: HistoryEntry[];
   reports: HistoryEntry[];
   addToHistory: (entry: HistoryEntry) => void;
+  clearHistory: () => void;
   saveReport: (entry: HistoryEntry) => void;
   isReport: (id: string) => boolean;
 };
@@ -31,6 +32,11 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const clearHistory = useCallback(() => {
+    setHistory([]);
+    persistHistory([]);
+  }, []);
+
   const saveReport = useCallback((entry: HistoryEntry) => {
     setReports((prev) => {
       if (prev.some((r) => r.id === entry.id)) return prev;
@@ -43,7 +49,7 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
   const isReport = useCallback((id: string) => reports.some((r) => r.id === id), [reports]);
 
   return (
-    <HistoryContext.Provider value={{ history, reports, addToHistory, saveReport, isReport }}>
+    <HistoryContext.Provider value={{ history, reports, addToHistory, clearHistory, saveReport, isReport }}>
       {children}
     </HistoryContext.Provider>
   );
