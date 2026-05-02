@@ -5,6 +5,7 @@ import { Zap, Square } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import AgentTrace from "@/components/AgentTrace";
 import OutputPanel from "@/components/OutputPanel";
+import { useHistory } from "@/context/HistoryContext";
 import type { BriefItem, AgentEvent } from "@/lib/agent";
 import type { IdeaItem, IdeaEvent } from "@/lib/ideate";
 
@@ -28,6 +29,10 @@ export default function Home() {
   const [isIdeateComplete, setIsIdeateComplete] = useState(false);
   const prefix = useId();
   const abortRef = useRef<AbortController | null>(null);
+  const runIdRef = useRef<string>(`run-${Date.now()}`);
+  const themesRef = useRef<BriefItem[]>([]);
+
+  const { addToHistory } = useHistory();
 
   const handleStop = useCallback(() => {
     abortRef.current?.abort();
@@ -42,6 +47,8 @@ export default function Home() {
 
   const handleAnalyze = useCallback(async () => {
     if (isRunning) return;
+    runIdRef.current = `run-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    themesRef.current = [];
     setTraceEntries([]);
     setThemes([]);
     setIsComplete(false);
@@ -87,14 +94,30 @@ export default function Home() {
               setThemes((prev) => {
                 const exists = prev.some((t) => t.theme_name === event.data.theme_name);
                 if (exists) return prev;
-                const updated = [...prev, event.data];
-                return updated.sort((a, b) => b.arr_at_risk - a.arr_at_risk).map((t, i) => ({ ...t, rank: i + 1 }));
+                const updated = [...prev, event.data]
+                  .sort((a, b) => b.arr_at_risk - a.arr_at_risk)
+                  .map((t, i) => ({ ...t, rank: i + 1 }));
+                themesRef.current = updated;
+                return updated;
               });
             }
 
             if (event.type === "complete") {
+              const summaryData = {
+                total_themes: event.total_themes,
+                total_arr_at_risk: event.total_arr_at_risk,
+                total_customers: event.total_customers,
+              };
               setIsComplete(true);
-              setSummary({ total_themes: event.total_themes, total_arr_at_risk: event.total_arr_at_risk, total_customers: event.total_customers });
+              setSummary(summaryData);
+              addToHistory({
+                id: runIdRef.current,
+                timestamp: Date.now(),
+                sources: selectedSources,
+                summary: summaryData,
+                themes: themesRef.current,
+                ideas: [],
+              });
             }
           } catch {
             // skip malformed lines
@@ -110,7 +133,7 @@ export default function Home() {
     } finally {
       setIsRunning(false);
     }
-  }, [isRunning, selectedSources, addTrace]);
+  }, [isRunning, selectedSources, addTrace, addToHistory]);
 
   const handleIdeate = useCallback(async () => {
     if (isIdeating || !isComplete || themes.length === 0) return;
