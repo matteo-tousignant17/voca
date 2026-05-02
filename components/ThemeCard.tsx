@@ -127,18 +127,7 @@ export default function ThemeCard({
       {/* Suggested action */}
       <div className="flex items-start gap-2 bg-emerald-500/[0.05] border border-emerald-500/[0.12] rounded-md px-3 py-2 mb-3">
         <span className="text-emerald-500 text-xs shrink-0 mt-0.5">→</span>
-        <p className="text-emerald-400 text-[11px] leading-relaxed flex-1">{item.suggested_action}</p>
-        {onIdeate && (
-          <button
-            type="button"
-            onClick={handleIdeate}
-            title="Ideate on this theme"
-            className="flex items-center gap-1 text-[10px] font-semibold text-emerald-300 hover:text-emerald-100 ml-auto shrink-0 px-1.5 py-0.5 rounded hover:bg-emerald-500/[0.08] transition-colors"
-          >
-            <Lightbulb size={10} />
-            Ideate →
-          </button>
-        )}
+        <p className="text-emerald-400 text-[11px] leading-relaxed flex-1 min-w-0">{item.suggested_action}</p>
       </div>
 
       {/* Stats — ARR hero + supporting */}
@@ -212,6 +201,23 @@ export default function ThemeCard({
           </div>
         )}
       </div>
+
+      {onIdeate && (
+        <div className="mt-4 pt-4 border-t border-white/[0.08] shrink-0">
+          <button
+            type="button"
+            onClick={handleIdeate}
+            title="Open ideation seeded with this theme"
+            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-xs font-semibold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-lg shadow-indigo-950/40 border border-white/10 transition-all active:scale-[0.98]"
+          >
+            <Lightbulb size={14} className="shrink-0 opacity-95" />
+            Ideate on this theme
+          </button>
+          <p className="text-center text-[10px] text-gray-600 mt-2 leading-snug">
+            Uses this theme&apos;s brief as the seed for focused product ideas.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
