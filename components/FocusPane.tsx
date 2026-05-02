@@ -25,7 +25,7 @@ const FOCUS_OPTIONS = [
   {
     id: "highest_value",
     label: "Highest-value accounts",
-    description: "Surface issues that affect the most ARR-at-risk customers first.",
+    description: "Surface problems hurting your biggest customers first.",
     prompt: "Prioritize themes that affect enterprise and mid-market accounts. Weight issues that appear in Gong calls and support tickets from high-ARR customers most heavily.",
     icon: "💰",
     color: "text-amber-400",
@@ -52,7 +52,7 @@ const FOCUS_OPTIONS = [
   {
     id: "ai_ops",
     label: "AI & automation gaps",
-    description: "Find where AI or agentic solutions would have the highest leverage.",
+    description: "Spot where users are stuck doing repetitive work that could be automated.",
     prompt: "Focus on repetitive manual workflows, missing automation, and areas where AI assistance would save the most time. Look for patterns where users describe doing the same thing repeatedly or wishing something 'just happened automatically'.",
     icon: "🤖",
     color: "text-indigo-400",
@@ -91,6 +91,13 @@ type Props = {
   disabled: boolean;
 };
 
+function runButtonLabel(selectedFocus: string, customFocus: string): string {
+  if (selectedFocus === "custom") return "Run custom analysis";
+  if (!selectedFocus || selectedFocus === "general") return "Run Agent";
+  const opt = FOCUS_OPTIONS.find((f) => f.prompt === selectedFocus);
+  return opt ? `Analyze: ${opt.label}` : "Run Agent";
+}
+
 export default function FocusPane({ selectedFocus, customFocus, onSelectFocus, onCustomFocus, onRun, disabled }: Props) {
   const { history, clearHistory } = useHistory();
 
@@ -98,8 +105,7 @@ export default function FocusPane({ selectedFocus, customFocus, onSelectFocus, o
     <div className="flex flex-col h-full bg-[#0c0c0e] overflow-y-auto">
       {/* Header */}
       <div className="px-5 pt-5 pb-4 shrink-0">
-        <p className="text-xs font-semibold text-white mb-0.5">What do you want to focus on?</p>
-        <p className="text-[11px] text-gray-600">Choose a lens or describe your own.</p>
+        <p className="text-xs font-semibold text-white">What are you trying to answer?</p>
       </div>
 
       {/* Focus options */}
@@ -121,11 +127,10 @@ export default function FocusPane({ selectedFocus, customFocus, onSelectFocus, o
                 <span className={`text-xs font-semibold ${active ? "text-white" : "text-gray-300"}`}>
                   {opt.label}
                 </span>
-                {active && (
-                  <span className={`ml-auto text-[10px] font-medium ${opt.color}`}>selected</span>
-                )}
               </div>
-              <p className="text-[11px] text-gray-600 leading-relaxed pl-5">{opt.description}</p>
+              {opt.id !== "general" && (
+                <p className="text-[11px] text-gray-600 leading-relaxed pl-5">{opt.description}</p>
+              )}
             </button>
           );
         })}
@@ -135,7 +140,7 @@ export default function FocusPane({ selectedFocus, customFocus, onSelectFocus, o
       <div className="px-3 mt-3 shrink-0">
         <textarea
           rows={2}
-          placeholder="Or describe a custom focus area..."
+          placeholder="e.g. Find reasons customers didn't renew in Q1"
           value={customFocus}
           onChange={(e) => onCustomFocus(e.target.value)}
           onFocus={() => { if (selectedFocus !== "custom") onSelectFocus("custom"); }}
@@ -155,7 +160,7 @@ export default function FocusPane({ selectedFocus, customFocus, onSelectFocus, o
           className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <Zap size={12} />
-          Run Agent
+          {runButtonLabel(selectedFocus, customFocus)}
         </button>
       </div>
 
