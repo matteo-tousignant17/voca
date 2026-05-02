@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback, KeyboardEvent } from "react";
 import { Brain, ChevronRight, Cpu } from "lucide-react";
 import type { AgentEvent, ToolResultDetail } from "@/lib/agent";
 import type { IdeaEvent } from "@/lib/ideate";
@@ -17,6 +17,7 @@ type Props = {
   entries: TraceEntry[];
   isRunning: boolean;
   isIdeating?: boolean;
+  onFollowUp?: (text: string) => void;
 };
 
 const TOOL_META: Record<string, { label: string; color: string; dot: string }> = {
@@ -290,14 +291,60 @@ function buildView(entries: TraceEntry[]): RenderedEntry[] {
   return out;
 }
 
-export default function AgentTrace({ entries, isRunning, isIdeating }: Props) {
+export default function AgentTrace({ entries, isRunning, isIdeating, onFollowUp }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const isLive = isRunning || isIdeating;
+  const isComplete = !isLive && entries.length > 0;
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [followUpText, setFollowUpText] = useState("");
+  const [inputVisible, setInputVisible] = useState(false);
+  const prevIsLiveRef = useRef(isLive);
 
+  // Fade in the follow-up input after run completes
+  useEffect(() => {
+    const wasLive = prevIsLiveRef.current;
+    prevIsLiveRef.current = isLive;
+
+    if (wasLive && !isLive && entries.length > 0) {
+      // Small delay so the last entry has rendered, then fade in
+      const t = setTimeout(() => setInputVisible(true), 100);
+      return () => clearTimeout(t);
+    }
+
+    // Hide input immediately when a new run starts (schedule via timeout to avoid direct setState in effect)
+    if (isLive) {
+      const t = setTimeout(() => setInputVisible(false), 0);
+      return () => clearTimeout(t);
+    }
+  }, [isLive, entries.length]);
+
+  // Scroll to bottom on new entries
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [entries]);
+
+  // Scroll down ~80px below last item when input becomes visible
+  useEffect(() => {
+    if (inputVisible && scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [inputVisible]);
+
+  const handleSubmit = useCallback(() => {
+    const text = followUpText.trim();
+    if (!text || !onFollowUp) return;
+    setFollowUpText("");
+    setInputVisible(false);
+    onFollowUp(text);
+  }, [followUpText, onFollowUp]);
+
+  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  }, [handleSubmit]);
 
   const view = useMemo(() => buildView(entries), [entries]);
 
@@ -333,7 +380,10 @@ export default function AgentTrace({ entries, isRunning, isIdeating }: Props) {
       </div>
 
       {/* Log */}
-      <div className="flex-1 overflow-y-auto min-h-0 px-3 py-3 font-mono text-[11.5px] leading-relaxed">
+      <div
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto min-h-0 px-3 py-3 font-mono text-[11.5px] leading-relaxed"
+      >
         {view.length === 0 && (
           <p className="text-gray-700 italic px-2">Waiting for agent...</p>
         )}
@@ -515,8 +565,32 @@ export default function AgentTrace({ entries, isRunning, isIdeating }: Props) {
           </div>
         )}
 
+        {/* Spacer so there's room below the last item when the follow-up bar is visible */}
+        {isComplete && <div style={{ height: 80 }} />}
+
         <div ref={bottomRef} />
       </div>
+
+      {/* Sticky follow-up input — fades in after run completes */}
+      {isComplete && onFollowUp && (
+        <div
+          className="shrink-0 px-3 pb-3 pt-2 border-t border-white/[0.06] bg-[#0c0c0e]"
+          style={{
+            opacity: inputVisible ? 1 : 0,
+            transition: "opacity 200ms ease-in",
+            pointerEvents: inputVisible ? "auto" : "none",
+          }}
+        >
+          <textarea
+            rows={2}
+            value={followUpText}
+            onChange={(e) => setFollowUpText(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Ask a follow-up, or describe a new analysis..."
+            className="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2.5 text-xs text-gray-300 placeholder-gray-600 focus:outline-none focus:border-white/[0.18] resize-none transition-colors leading-relaxed font-mono"
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -53,11 +53,13 @@ export default function Home() {
     ]);
   }, [prefix]);
 
-  const handleAnalyze = useCallback(async () => {
+  const handleAnalyze = useCallback(async (focusOverride?: string, appendHistory?: boolean) => {
     if (isRunning) return;
     runIdRef.current = `run-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     themesRef.current = [];
-    setTraceEntries([]);
+    if (!appendHistory) {
+      setTraceEntries([]);
+    }
     setThemes([]);
     setIsComplete(false);
     setSummary(null);
@@ -67,7 +69,7 @@ export default function Home() {
     setIsRunning(true);
     abortRef.current = new AbortController();
 
-    const focusToSend = selectedFocus === "custom" ? customFocus : selectedFocus;
+    const focusToSend = focusOverride ?? (selectedFocus === "custom" ? customFocus : selectedFocus);
 
     try {
       const res = await fetch("/api/analyze", {
@@ -145,6 +147,12 @@ export default function Home() {
       setIsRunning(false);
     }
   }, [isRunning, selectedSources, selectedFocus, customFocus, addTrace, addToHistory, mode]);
+
+  const handleFollowUp = useCallback((text: string) => {
+    // Append a visual separator before the follow-up run
+    addTrace({ type: "trace", message: "── Follow-up ────────────────────────" });
+    handleAnalyze(text, /* appendHistory */ true);
+  }, [addTrace, handleAnalyze]);
 
   const handleIdeate = useCallback(async () => {
     if (isIdeating || !isComplete || themes.length === 0) return;
@@ -226,7 +234,7 @@ export default function Home() {
 
           <div className="flex items-center gap-3">
             <button
-              onClick={isRunning || isIdeating ? handleStop : handleAnalyze}
+              onClick={isRunning || isIdeating ? handleStop : () => handleAnalyze()}
               disabled={!isRunning && !isIdeating && selectedSources.length === 0}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-semibold text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
                 isRunning || isIdeating
@@ -254,14 +262,14 @@ export default function Home() {
           {/* Left: FocusPane (idle) or AgentTrace (active) */}
           <div className="flex flex-col min-h-0 border-r border-white/[0.06]">
             {showTrace ? (
-              <AgentTrace entries={traceEntries} isRunning={isRunning} isIdeating={isIdeating} />
+              <AgentTrace entries={traceEntries} isRunning={isRunning} isIdeating={isIdeating} onFollowUp={handleFollowUp} />
             ) : (
               <FocusPane
                 selectedFocus={selectedFocus}
                 customFocus={customFocus}
                 onSelectFocus={setSelectedFocus}
                 onCustomFocus={setCustomFocus}
-                onRun={handleAnalyze}
+                onRun={() => handleAnalyze()}
                 disabled={selectedSources.length === 0}
               />
             )}
