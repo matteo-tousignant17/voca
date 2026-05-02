@@ -5,6 +5,7 @@ import { Zap, Square } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import AgentTrace from "@/components/AgentTrace";
 import OutputPanel from "@/components/OutputPanel";
+import FocusPane from "@/components/FocusPane";
 import { useHistory } from "@/context/HistoryContext";
 import type { BriefItem, AgentEvent } from "@/lib/agent";
 import type { IdeaItem, IdeaEvent } from "@/lib/ideate";
@@ -19,6 +20,8 @@ type TraceEntry = {
 
 export default function Home() {
   const [selectedSources] = useState<string[]>(["reddit", "g2", "gong", "support_tickets"]);
+  const [selectedFocus, setSelectedFocus] = useState("general");
+  const [customFocus, setCustomFocus] = useState("");
   const [traceEntries, setTraceEntries] = useState<TraceEntry[]>([]);
   const [themes, setThemes] = useState<BriefItem[]>([]);
   const [isRunning, setIsRunning] = useState(false);
@@ -33,6 +36,9 @@ export default function Home() {
   const themesRef = useRef<BriefItem[]>([]);
 
   const { addToHistory } = useHistory();
+
+  // Left panel shows FocusPane when idle, AgentTrace when active
+  const showTrace = isRunning || isIdeating || traceEntries.length > 0;
 
   const handleStop = useCallback(() => {
     abortRef.current?.abort();
@@ -59,11 +65,13 @@ export default function Home() {
     setIsRunning(true);
     abortRef.current = new AbortController();
 
+    const focusToSend = selectedFocus === "custom" ? customFocus : selectedFocus;
+
     try {
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sources: selectedSources }),
+        body: JSON.stringify({ sources: selectedSources, focus: focusToSend }),
         signal: abortRef.current.signal,
       });
 
@@ -133,7 +141,7 @@ export default function Home() {
     } finally {
       setIsRunning(false);
     }
-  }, [isRunning, selectedSources, addTrace, addToHistory]);
+  }, [isRunning, selectedSources, selectedFocus, customFocus, addTrace, addToHistory]);
 
   const handleIdeate = useCallback(async () => {
     if (isIdeating || !isComplete || themes.length === 0) return;
@@ -173,13 +181,8 @@ export default function Home() {
           try {
             const event = JSON.parse(payload) as IdeaEvent;
             addTrace(event);
-
-            if (event.type === "idea") {
-              setIdeas((prev) => [...prev, event.data]);
-            }
-            if (event.type === "idea_complete") {
-              setIsIdeateComplete(true);
-            }
+            if (event.type === "idea") setIdeas((prev) => [...prev, event.data]);
+            if (event.type === "idea_complete") setIsIdeateComplete(true);
           } catch {
             // skip malformed lines
           }
@@ -235,9 +238,22 @@ export default function Home() {
 
         {/* Split view — trace:output 35:65 */}
         <div className="flex-1 grid grid-cols-[35fr_65fr] gap-0 min-h-0 overflow-hidden">
+          {/* Left: FocusPane (idle) or AgentTrace (active) */}
           <div className="flex flex-col min-h-0 border-r border-white/[0.06]">
-            <AgentTrace entries={traceEntries} isRunning={isRunning} isIdeating={isIdeating} />
+            {showTrace ? (
+              <AgentTrace entries={traceEntries} isRunning={isRunning} isIdeating={isIdeating} />
+            ) : (
+              <FocusPane
+                selectedFocus={selectedFocus}
+                customFocus={customFocus}
+                onSelectFocus={setSelectedFocus}
+                onCustomFocus={setCustomFocus}
+                onRun={handleAnalyze}
+                disabled={selectedSources.length === 0}
+              />
+            )}
           </div>
+          {/* Right: output */}
           <div className="flex flex-col min-h-0">
             <OutputPanel
               themes={themes}

@@ -2,13 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart2, Database, FileText, Settings, Zap, Bookmark } from "lucide-react";
+import { BarChart2, Database, FileText, Settings, Zap, Bookmark, Lightbulb } from "lucide-react";
 import { Fragment } from "react";
 import { useHistory } from "@/context/HistoryContext";
 import { formatRelativeTime, formatARR } from "@/lib/history";
 
 const NAV_ITEMS = [
-  { id: "analyze",  label: "Analyze",  icon: BarChart2, href: "/" },
+  {
+    id: "analyze", label: "Analyze", icon: BarChart2, href: "/",
+    children: [
+      { id: "ideate", label: "Ideate", icon: Lightbulb, href: "/#ideate" },
+    ],
+  },
   { id: "sources",  label: "Sources",  icon: Database,  href: "/sources" },
   { id: "reports",  label: "Reports",  icon: FileText,   href: "/reports" },
   { id: "settings", label: "Settings", icon: Settings,   href: "/settings", soon: true },
@@ -69,6 +74,21 @@ export default function Sidebar() {
                   </span>
                 )}
               </Link>
+
+              {/* Sub-items — shown when parent is active */}
+              {active && item.children?.map((child) => {
+                const ChildIcon = child.icon;
+                return (
+                  <Link
+                    key={child.id}
+                    href={child.href}
+                    className="flex items-center gap-2 pl-7 pr-2.5 py-1.5 rounded-md text-xs text-gray-500 hover:text-gray-300 hover:bg-white/[0.04] transition-colors mt-0.5"
+                  >
+                    <ChildIcon size={12} className="text-gray-600 shrink-0" />
+                    <span>{child.label}</span>
+                  </Link>
+                );
+              })}
 
               {item.id === "analyze" && history.length > 0 && (
                 <div className="mt-0.5 mb-1.5 space-y-0.5">
