@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { ChevronDown, X } from "lucide-react";
+import { ChevronDown, Lightbulb, X } from "lucide-react";
 import type { BriefItem } from "@/lib/agent";
 
 type Mode = "trace" | "detail";
@@ -14,6 +14,9 @@ type Props = {
   onSelectTheme: (theme: BriefItem) => void;
   onClose: () => void;
   hasTrace: boolean;
+  /** Open focused ideation for this detailed theme */
+  onIdeate?: (theme: BriefItem) => void;
+  ideateDisabled?: boolean;
 };
 
 const SEVERITY_DOT: Record<string, string> = {
@@ -74,6 +77,8 @@ export default function ThemeDetailPane({
   onSelectTheme,
   onClose,
   hasTrace,
+  onIdeate,
+  ideateDisabled = false,
 }: Props) {
   const otherThemes = useMemo(
     () => allThemes.filter((t) => t.theme_name !== theme.theme_name),
@@ -190,9 +195,25 @@ export default function ThemeDetailPane({
         </section>
 
         {/* Recommended action — elaborated */}
-        <section className="rounded-lg border border-emerald-500/[0.12] bg-emerald-500/[0.04] px-4 py-3">
+        <section className="rounded-lg border border-emerald-500/[0.12] bg-emerald-500/[0.04] px-4 py-3 space-y-3">
           <h4 className="text-[10px] font-semibold text-emerald-500/80 uppercase tracking-wider mb-2">Recommended action</h4>
           <p className="text-[12px] text-emerald-100/95 leading-relaxed">{theme.suggested_action}</p>
+          {onIdeate ? (
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-emerald-500/15">
+              <p className="text-[10px] text-emerald-200/65 leading-snug flex-1 min-w-[140px]">
+                Run ideation using this theme’s evidence, risks, and recommended action as the seed.
+              </p>
+              <button
+                type="button"
+                disabled={ideateDisabled}
+                onClick={() => onIdeate(theme)}
+                className="flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-md text-[11px] font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm shadow-indigo-950/40 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-indigo-600"
+              >
+                <Lightbulb size={11} />
+                Ideate on this theme →
+              </button>
+            </div>
+          ) : null}
         </section>
 
         {/* Tradeoffs — elaborated row layout */}

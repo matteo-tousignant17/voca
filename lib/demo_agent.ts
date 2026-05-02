@@ -19,6 +19,7 @@ type ScriptedTheme = {
   suggested_action: string;
 };
 
+/** Demo brief: two canonical enterprise themes for product walkthroughs / ideation demos only. */
 const SCRIPTED_THEMES: ScriptedTheme[] = [
   {
     name: "Real-time collaboration data loss",
@@ -30,19 +31,13 @@ const SCRIPTED_THEMES: ScriptedTheme[] = [
       {
         quote:
           "Our lead designer spent two days on a client presentation in Notion, and a simultaneous editing conflict wiped out about 30% of it. We had no backup.",
-        source: "Gong Call (churn_save)",
+        source: "Gong Call, Mid-Market",
         company_size: "Mid-Market",
       },
       {
         quote:
           "Our legal team's contract review database lost ~40% of comments after a sync conflict. Support could not recover them.",
-        source: "G2 Review",
-        company_size: "Enterprise",
-      },
-      {
-        quote:
-          "Foundational issues — data loss, search, AI context — raised at executive level on our $320K renewal.",
-        source: "Gong Call (renewal_risk)",
+        source: "G2 Review, Enterprise",
         company_size: "Enterprise",
       },
     ],
@@ -83,20 +78,14 @@ const SCRIPTED_THEMES: ScriptedTheme[] = [
       {
         quote:
           "Our compliance team did a review and Notion can't tell us clearly who edited what and when. That's a blocker for our regulatory requirements.",
-        source: "Gong Call (renewal_risk)",
+        source: "Gong Call, Enterprise",
         company_size: "Enterprise",
       },
       {
         quote:
           "We're now running Notion in parallel with a more controlled system just for sensitive documents.",
-        source: "G2 Review",
+        source: "G2 Review, Mid-Market",
         company_size: "Mid-Market",
-      },
-      {
-        quote:
-          "Could not pass our HIPAA risk assessment with Notion in the stack. The audit log doesn't capture all events, no field-level encryption, no DLP.",
-        source: "G2 Review",
-        company_size: "Enterprise",
       },
     ],
     customers_affected: 48,
@@ -129,215 +118,6 @@ const SCRIPTED_THEMES: ScriptedTheme[] = [
     churn_signal: "Enterprise NPS -5 6mo · $412K churned (90d)",
     suggested_action:
       "Address enterprise audit log + governance gaps — 18% ARR at risk ($2.6M). Concrete renewal exposure: Helix Biosciences, Heritage Wealth. Ship immutable audit log + admin role separation in a focused enterprise-readiness sprint.",
-  },
-  {
-    name: "Offline mode + mobile performance",
-    problem_statement:
-      "Lack of true offline support and a slow mobile client are blocking field-team rollouts and pushing SMB consultants to Obsidian for note-taking on the go.",
-    severity: "high",
-    affected_segments: ["smb", "mid_market"],
-    evidence: [
-      {
-        quote:
-          "We travel constantly for client work. No offline support means we can't use Notion on planes or in areas with bad reception.",
-        source: "Reddit (r/Notion)",
-        company_size: "SMB",
-      },
-      {
-        quote:
-          "If you had offline mode, I could get you 80 more seats today. That's an easy decision.",
-        source: "Gong Call (expansion_blocked)",
-        company_size: "Mid-Market",
-      },
-      {
-        quote:
-          "Mobile performance blocking client-on-site use — losing the account to Obsidian over offline mode and guest pricing.",
-        source: "Support Ticket",
-        company_size: "SMB",
-      },
-    ],
-    customers_affected: 448,
-    arr_at_risk: 1_920_000,
-    arr_at_risk_pct: 13,
-    tradeoffs: {
-      effort: "Med-High effort",
-      impact: "High retention impact",
-      segment_skew: "SMB + Mid-Market-skewed",
-    },
-    named_at_risk_accounts: [
-      {
-        name: "Northwind Logistics",
-        arr: 88_000,
-        risk_reason:
-          "200-seat field expansion blocked by lack of offline mode and API rate limits",
-      },
-      {
-        name: "Atlas Architecture",
-        arr: 9_600,
-        risk_reason:
-          "Lapsed to Obsidian over offline mode and guest pricing; win-back conversation in progress",
-      },
-      {
-        name: "Headland Studio",
-        arr: 6_000,
-        risk_reason: "Mobile performance blocking client-on-site use",
-      },
-    ],
-    churn_signal:
-      "SMB NPS -7 6mo · Mid-Market NPS -3 6mo · $470K churned (90d)",
-    suggested_action:
-      "Address offline mode + mobile performance — 13% ARR at risk ($1.9M). Concrete renewal exposure: Northwind Logistics, Atlas Architecture. Schedule for next planning cycle; lead with a service-worker offline read cache + mobile profiling sprint.",
-  },
-  {
-    name: "Search quality at scale",
-    problem_statement:
-      "Search inside table cells, ranking, and date-filtering is so weak that customers with 8K+ pages route around Notion (Glean / external indexers), undermining the knowledge-base value prop.",
-    severity: "high",
-    affected_segments: ["mid_market", "enterprise"],
-    evidence: [
-      {
-        quote:
-          "I have thousands of documents and regularly can't find things I know exist. This is the core job of a knowledge base — it needs to work.",
-        source: "G2 Review",
-        company_size: "Mid-Market",
-      },
-      {
-        quote:
-          "We're now using Glean on top of Notion for actual search, which is absurd given Notion is supposed to be a knowledge tool.",
-        source: "G2 Review",
-        company_size: "Enterprise",
-      },
-      {
-        quote:
-          "Adoption stalled at 60% over search and permissions confusion.",
-        source: "Support Ticket",
-        company_size: "Mid-Market",
-      },
-    ],
-    customers_affected: 160,
-    arr_at_risk: 1_280_000,
-    arr_at_risk_pct: 9,
-    tradeoffs: {
-      effort: "Med-High effort",
-      impact: "High retention impact",
-      segment_skew: "Mid-Market + Enterprise-skewed",
-    },
-    named_at_risk_accounts: [
-      {
-        name: "NovaSoft Technologies",
-        arr: 144_000,
-        risk_reason:
-          "API performance and search blocking internal tooling expansion",
-      },
-      {
-        name: "Pinecrest Schools",
-        arr: 27_000,
-        risk_reason:
-          "Adoption stalled at 60% over search and permissions confusion",
-      },
-    ],
-    churn_signal: "Mid-Market NPS -3 6mo · $698K churned (90d)",
-    suggested_action:
-      "Address search quality at scale — 9% ARR at risk ($1.3M). Concrete renewal exposure: NovaSoft Technologies, Pinecrest Schools. Ship in-cell search + ranking pass with date filters; expose a managed Glean-like index for Enterprise.",
-  },
-  {
-    name: "AI add-on context awareness",
-    problem_statement:
-      "Notion AI is perceived as a generic LLM wrapper without workspace context, so customers turn the add-on off — Coda AI and Glean are cited as preferred alternatives.",
-    severity: "high",
-    affected_segments: ["smb", "mid_market"],
-    evidence: [
-      {
-        quote:
-          "The AI has no awareness of my workspace content — it's just a generic LLM wrapper. Competitors like Coda AI actually understand your data.",
-        source: "G2 Review",
-        company_size: "SMB",
-      },
-      {
-        quote:
-          "We pay for AI but our team avoids it because it can't answer 'what did we decide on this last quarter?'",
-        source: "G2 Review",
-        company_size: "SMB",
-      },
-      {
-        quote:
-          "AI add-on cancel intent at renewal; Glean evaluation underway.",
-        source: "Support Ticket",
-        company_size: "Mid-Market",
-      },
-    ],
-    customers_affected: 224,
-    arr_at_risk: 1_080_000,
-    arr_at_risk_pct: 8,
-    tradeoffs: {
-      effort: "Medium effort",
-      impact: "High retention impact",
-      segment_skew: "SMB + Mid-Market-skewed",
-    },
-    named_at_risk_accounts: [
-      {
-        name: "Bramble Health",
-        arr: 36_000,
-        risk_reason:
-          "AI add-on cancel intent at renewal; Glean evaluation underway",
-      },
-      {
-        name: "Cobalt Studios",
-        arr: 22_500,
-        risk_reason:
-          "Mobile UX and AI add-on quality, ~95% likely to churn at renewal",
-      },
-    ],
-    churn_signal:
-      "SMB NPS -7 6mo · Mid-Market NPS -3 6mo · $470K churned (90d)",
-    suggested_action:
-      "Address AI add-on context awareness — 8% ARR at risk ($1.1M). Concrete renewal exposure: Bramble Health, Cobalt Studios. Ship workspace-grounded retrieval into AI answers with citation back to source pages within the next planning cycle.",
-  },
-  {
-    name: "Pricing transparency & guest seat model",
-    problem_statement:
-      "Unannounced renewal price hikes (up to 40%) and per-guest pricing are surfacing as headline complaints from agencies and mid-market accounts, eroding trust and triggering procurement escalations.",
-    severity: "medium",
-    affected_segments: ["smb", "mid_market"],
-    evidence: [
-      {
-        quote:
-          "Our annual renewal came in 40% higher than the previous year. No advance notice, no email explaining changes.",
-        source: "G2 Review",
-        company_size: "Mid-Market",
-      },
-      {
-        quote:
-          "Guest seat pricing is brutal for an agency. Our guest costs exceed our member costs.",
-        source: "G2 Review",
-        company_size: "SMB",
-      },
-      {
-        quote:
-          "Repeat billing surprises, requested cancel-pending.",
-        source: "Support Ticket",
-        company_size: "SMB",
-      },
-    ],
-    customers_affected: 280,
-    arr_at_risk: 720_000,
-    arr_at_risk_pct: 5,
-    tradeoffs: {
-      effort: "Medium effort",
-      impact: "Moderate retention impact",
-      segment_skew: "SMB + Mid-Market-skewed",
-    },
-    named_at_risk_accounts: [
-      {
-        name: "Meadowlark Creative",
-        arr: 7_800,
-        risk_reason: "Repeat billing surprises, requested cancel-pending",
-      },
-    ],
-    churn_signal:
-      "SMB NPS -7 6mo · Mid-Market NPS -3 6mo · $470K churned (90d)",
-    suggested_action:
-      "Address pricing transparency & guest seat model — 5% ARR at risk ($720K). Concrete renewal exposure: Meadowlark Creative. Schedule a CS-led renewal-notice policy + agency-friendly guest tier in next planning cycle.",
   },
 ];
 
@@ -489,7 +269,7 @@ export async function* runDemoAgent(
   yield {
     type: "tool_result",
     tool: "synthesize_themes",
-    summary: `Synthesized ${SCRIPTED_THEMES.length} themes (2 critical, 3 high, 1 medium)`,
+    summary: `Synthesized ${SCRIPTED_THEMES.length} themes (2 critical)`,
     details: synthesisDetail,
   };
   await sleep(600);
@@ -599,8 +379,4 @@ function themeSourceLabel(themeName: string, available: DemoSource[]): string {
 const THEME_SOURCE_MAP: Record<string, string[]> = {
   "Real-time collaboration data loss": ["gong", "g2", "zendesk", "salesforce"],
   "Enterprise audit log + governance gaps": ["salesforce", "gong", "g2", "zendesk"],
-  "Offline mode + mobile performance": ["reddit", "g2", "amplitude", "pendo"],
-  "Search quality at scale": ["g2", "amplitude", "zendesk", "pendo"],
-  "AI add-on context awareness": ["g2", "pendo", "salesforce"],
-  "Pricing transparency & guest seat model": ["g2", "zendesk", "reddit"],
 };

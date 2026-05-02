@@ -369,6 +369,8 @@ export default function Home() {
         onSelectTheme={(t) => setActiveDetailTheme(t)}
         onClose={handleCloseDetail}
         hasTrace={traceEntries.length > 0}
+        onIdeate={handleIdeateTheme}
+        ideateDisabled={isIdeating || !isComplete}
       />
     );
   } else {
