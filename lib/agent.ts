@@ -47,10 +47,16 @@ export type BriefItem = {
   churn_signal: string;
 };
 
+export type ToolResultDetail =
+  | { kind: "kv"; rows: Array<{ label: string; value: string }> }
+  | { kind: "list"; items: string[] }
+  | { kind: "table"; columns: string[]; rows: Array<Array<string | number>> }
+  | { kind: "quotes"; items: Array<{ quote: string; source: string; tier?: string }> };
+
 export type AgentEvent =
   | { type: "trace"; message: string }
   | { type: "tool_call"; tool: string; input: Record<string, unknown> }
-  | { type: "tool_result"; tool: string; summary: string }
+  | { type: "tool_result"; tool: string; summary: string; details?: ToolResultDetail }
   | { type: "theme"; data: BriefItem }
   | { type: "complete"; total_themes: number; total_arr_at_risk: number; total_customers: number }
   | { type: "error"; message: string };
