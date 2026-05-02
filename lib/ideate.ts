@@ -1,5 +1,10 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { BriefItem, ToolResultDetail } from "./agent";
+import {
+  DEMO_COLLABORATION_DATA_LOSS_THEME,
+  DEMO_COLLABORATION_IDEATE_APPROACHES,
+  COLLABORATION_IDEATE_FOCUS_MARKER,
+} from "./demo_ideate_examples";
 
 export type IdeaLens = "competitor" | "workflow" | "automation" | "agent";
 
@@ -249,7 +254,32 @@ export async function* runIdeateAgent(
     ? `\n\nFOCUS INSTRUCTION: Anchor every idea to this specific theme and prompt — ${trimmedFocus}. Ideas for other themes may be included but should support the focus.`
     : "";
 
-  const systemPrompt = `You are a product ideation agent specializing in B2B SaaS. You have been given the top 3 customer problems ranked by ARR at risk from a Voice of Customer analysis of Notion.${focusClause}
+  const collaborationThreeApproachMode =
+    !!trimmedFocus &&
+    trimmedFocus.includes(COLLABORATION_IDEATE_FOCUS_MARKER) &&
+    top3.some((t) => t.theme_name === DEMO_COLLABORATION_DATA_LOSS_THEME);
+
+  if (collaborationThreeApproachMode) {
+    yield {
+      type: "trace",
+      message: `Collaboration demo: ideas must advance three root-cause approaches — (${DEMO_COLLABORATION_IDEATE_APPROACHES.map((_, i) => i + 1).join(", ")}).`,
+    };
+  }
+
+  const collaborationClause = collaborationThreeApproachMode
+    ? `
+
+ROOT PROBLEM LOCK-IN FOR "${DEMO_COLLABORATION_DATA_LOSS_THEME}": The core failure mode is simultaneous collaboration and sync resolving in a way that loses or destroys user-visible content (not cosmetic UI glitches).
+
+MANDATORY COVERAGE: The final compiled ideas for "${DEMO_COLLABORATION_DATA_LOSS_THEME}" MUST reflect these three strategic approaches (one primary idea per approach minimum, each with a different lens where possible—competitor, workflow, automation, agent):
+1. ${DEMO_COLLABORATION_IDEATE_APPROACHES[0]}
+2. ${DEMO_COLLABORATION_IDEATE_APPROACHES[1]}
+3. ${DEMO_COLLABORATION_IDEATE_APPROACHES[2]}
+
+In each such idea's key_insight, briefly state which approach number (1–3) it primarily advances. You may still output the full 12 ideas across themes; for this theme, do not merge these three into a single generic "fix collaboration" idea.`
+    : "";
+
+  const systemPrompt = `You are a product ideation agent specializing in B2B SaaS. You have been given the top 3 customer problems ranked by ARR at risk from a Voice of Customer analysis of Notion.${focusClause}${collaborationClause}
 
 Your job: generate one high-quality product idea per theme per lens — 4 lenses × 3 themes = 12 ideas total.
 
@@ -277,17 +307,19 @@ Call tools in this order:
 
 Be specific. Reference actual Notion behavior and named competitors. Ideas must be buildable, not moonshots.`;
 
-  const messages: Anthropic.MessageParam[] = [
-    {
-      role: "user",
-      content: `Generate product ideas for these top 3 customer problems ranked by ARR at risk:\n\n${top3
-        .map(
-          (t, i) =>
-            `${i + 1}. **${t.theme_name}** (${t.severity}, $${(t.arr_at_risk / 1000).toFixed(0)}K ARR at risk, ${t.customers_affected} customers)\n   ${t.problem_statement}`
-        )
-        .join("\n\n")}\n\nCall all 5 tools in order and compile 12 ideas (4 lenses × 3 themes).`,
-    },
-  ];
+  const baseUserTurn = `Generate product ideas for these top 3 customer problems ranked by ARR at risk:\n\n${top3
+    .map(
+      (t, i) =>
+        `${i + 1}. **${t.theme_name}** (${t.severity}, $${(t.arr_at_risk / 1000).toFixed(0)}K ARR at risk, ${t.customers_affected} customers)\n   ${t.problem_statement}`
+    )
+    .join("\n\n")}\n\nCall all 5 tools in order and compile 12 ideas (4 lenses × 3 themes).`;
+
+  const userTurn =
+    collaborationThreeApproachMode && top3[0]?.theme_name === DEMO_COLLABORATION_DATA_LOSS_THEME
+      ? `${baseUserTurn}\n\nCRITICAL: "${DEMO_COLLABORATION_DATA_LOSS_THEME}" is the focus theme. In compile_ideas, include at least three distinct ideas for that theme—one that clearly advances strategic approach 1, one for approach 2, and one for approach 3 from the system prompt. Tag which approach (1–3) in each idea's key_insight.`
+      : baseUserTurn;
+
+  const messages: Anthropic.MessageParam[] = [{ role: "user", content: userTurn }];
 
   const lensState = new Map<string, InsightItem[]>();
   let finalIdeas: IdeaItem[] | null = null;

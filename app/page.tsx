@@ -13,6 +13,7 @@ import { useAgentMode } from "@/lib/settings";
 import type { BriefItem, AgentEvent } from "@/lib/agent";
 import type { IdeaItem, IdeaEvent } from "@/lib/ideate";
 import type { SavedTheme } from "@/lib/history";
+import { buildFocusedIdeatePrompt } from "@/lib/demo_ideate_examples";
 
 type AnyEvent = AgentEvent | IdeaEvent;
 
@@ -307,7 +308,8 @@ export default function Home() {
   // Feature 3: per-theme ideate trigger
   const handleIdeateTheme = useCallback((theme: BriefItem) => {
     setIdeateSeededTheme(theme);
-    setIdeatePrompt(`${theme.theme_name}: ${theme.problem_statement}`);
+    const oneLiner = `${theme.theme_name}: ${theme.problem_statement}`;
+    setIdeatePrompt(buildFocusedIdeatePrompt(theme.theme_name, oneLiner));
     setShowIdeatePane(true);
     setMiddlePanelMode("trace");
   }, []);

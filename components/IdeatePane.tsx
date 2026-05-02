@@ -3,6 +3,11 @@
 import { Lightbulb, X } from "lucide-react";
 import { useEffect, useRef, type KeyboardEvent } from "react";
 import type { BriefItem } from "@/lib/agent";
+import {
+  DEMO_COLLABORATION_DATA_LOSS_THEME,
+  DEMO_COLLABORATION_IDEATE_APPROACHES,
+  DEMO_COLLABORATION_ROOT_PROBLEM,
+} from "@/lib/demo_ideate_examples";
 
 type Props = {
   seedTheme: BriefItem | null;
@@ -71,7 +76,25 @@ export default function IdeatePane({ seedTheme, prompt, onPromptChange, onRun, o
               </span>
             </div>
           </div>
-        ) : (
+        ) : null}
+        {seedTheme?.theme_name === DEMO_COLLABORATION_DATA_LOSS_THEME ? (
+          <div className="rounded-lg border border-indigo-500/20 bg-indigo-500/[0.06] px-3 py-3">
+            <div className="text-[10px] font-semibold text-indigo-300/90 uppercase tracking-wider mb-1.5">
+              Three example approaches (root problem)
+            </div>
+            <p className="text-[11px] text-gray-400 leading-relaxed mb-2.5">
+              Root cause to solve: {DEMO_COLLABORATION_ROOT_PROBLEM}. The prompt below asks the agent to cover all three angles.
+            </p>
+            <ol className="list-decimal list-inside space-y-2 text-[11px] text-gray-300 leading-relaxed">
+              {DEMO_COLLABORATION_IDEATE_APPROACHES.map((line) => (
+                <li key={line} className="pl-0.5 marker:text-indigo-400/80">
+                  {line}
+                </li>
+              ))}
+            </ol>
+          </div>
+        ) : null}
+        {!seedTheme ? (
           <div className="rounded-lg border border-dashed border-white/[0.06] bg-white/[0.01] px-3 py-2.5">
             <div className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider mb-1">
               No seed selected
@@ -80,7 +103,7 @@ export default function IdeatePane({ seedTheme, prompt, onPromptChange, onRun, o
               Describe the focus for ideation below.
             </p>
           </div>
-        )}
+        ) : null}
 
         {/* Editable prompt */}
         <div>
