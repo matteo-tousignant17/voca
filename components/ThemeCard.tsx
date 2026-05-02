@@ -71,6 +71,26 @@ export default function ThemeCard({ item, animationDelay = 0 }: { item: BriefIte
         </div>
       )}
 
+      {/* Named at-risk accounts */}
+      {item.named_at_risk_accounts?.length > 0 && (
+        <div className="mb-3">
+          <div className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider mb-1.5">
+            Named at-risk accounts
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {item.named_at_risk_accounts.map((acct) => (
+              <span
+                key={acct.name}
+                title={acct.risk_reason}
+                className="text-[10px] text-rose-300 bg-rose-500/[0.08] border border-rose-500/20 px-2 py-0.5 rounded-md"
+              >
+                {acct.name} · ${(acct.arr / 1000).toFixed(0)}K
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Tradeoff chips */}
       <div className="flex gap-1.5 flex-wrap mb-3">
         {[item.tradeoffs.effort, item.tradeoffs.impact, item.tradeoffs.segment_skew].map((t) => (
@@ -78,6 +98,14 @@ export default function ThemeCard({ item, animationDelay = 0 }: { item: BriefIte
             {t}
           </span>
         ))}
+        {item.churn_signal && (
+          <span
+            className="text-[10px] text-amber-300 bg-amber-500/[0.07] border border-amber-500/20 px-2 py-0.5 rounded-md"
+            title="Churn signal from CRM"
+          >
+            {item.churn_signal}
+          </span>
+        )}
       </div>
 
       {/* Suggested action */}
