@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { runIdeateAgent } from "@/lib/ideate";
+import { runDemoIdeateAgent } from "@/lib/demo_ideate";
 import type { BriefItem } from "@/lib/agent";
 
 export const runtime = "nodejs";
@@ -9,13 +10,15 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const themes: BriefItem[] = body.themes ?? [];
   const focus: string | undefined = typeof body.focus === "string" ? body.focus : undefined;
+  const mode: "live" | "demo" = body.mode === "live" ? "live" : "demo";
 
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        for await (const event of runIdeateAgent(themes, focus)) {
+        const gen = mode === "demo" ? runDemoIdeateAgent(themes, focus) : runIdeateAgent(themes, focus);
+        for await (const event of gen) {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
         }
       } catch (err) {

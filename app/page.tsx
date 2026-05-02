@@ -203,7 +203,7 @@ export default function Home() {
         const res = await fetch("/api/ideate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ themes: themesToUse, focus }),
+          body: JSON.stringify({ themes: themesToUse, focus, mode }),
           signal: abortRef.current.signal,
         });
 
@@ -246,7 +246,7 @@ export default function Home() {
         setIsIdeating(false);
       }
     },
-    [isIdeating, addTrace]
+    [isIdeating, addTrace, mode]
   );
 
   const handleIdeate = useCallback(async () => {

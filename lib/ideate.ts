@@ -325,19 +325,28 @@ Be specific. Reference actual Notion behavior and named competitors. Ideas must 
   let finalIdeas: IdeaItem[] | null = null;
 
   for (let iteration = 0; iteration < 8; iteration++) {
-    yield { type: "trace", message: `Ideation turn ${iteration + 1}...` };
+    yield { type: "trace", message: `Ideation turn ${iteration + 1}…` };
 
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 8192,
-      system: systemPrompt,
-      tools: IDEATE_TOOLS,
-      messages,
-    });
+    let response: Anthropic.Message;
+    try {
+      response = await client.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 8192,
+        system: systemPrompt,
+        tools: IDEATE_TOOLS,
+        messages,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      yield { type: "error", message: `Ideation API failed (${msg}). Check ANTHROPIC_API_KEY / network.` };
+      yield { type: "idea_complete", total_ideas: finalIdeas?.length ?? 0 };
+      return;
+    }
 
     messages.push({ role: "assistant", content: response.content });
 
     const toolResults: Anthropic.ToolResultBlockParam[] = [];
+    let sawToolUse = false;
 
     for (const block of response.content) {
       if (block.type === "text" && block.text.trim()) {
@@ -348,6 +357,7 @@ Be specific. Reference actual Notion behavior and named competitors. Ideas must 
       }
 
       if (block.type === "tool_use") {
+        sawToolUse = true;
         const toolInput = block.input as Record<string, unknown>;
 
         yield { type: "tool_call", tool: block.name, input: toolInput };
@@ -412,6 +422,19 @@ Be specific. Reference actual Notion behavior and named competitors. Ideas must 
 
     if (toolResults.length > 0) {
       messages.push({ role: "user", content: toolResults });
+    }
+
+    if (!sawToolUse && toolResults.length === 0) {
+      yield {
+        type: "trace",
+        message:
+          "Model returned no tool calls this turn — if ideation hangs here, shorten the focus prompt or use Demo mode.",
+      };
+    }
+
+    if (finalIdeas && finalIdeas.length > 0) {
+      yield { type: "idea_complete", total_ideas: finalIdeas.length };
+      return;
     }
 
     if (response.stop_reason === "end_turn") break;
