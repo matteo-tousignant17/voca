@@ -1,15 +1,18 @@
 "use client";
 
 import { useState, useCallback, useId } from "react";
-import { Zap, ChevronDown } from "lucide-react";
+import { Zap } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import AgentTrace from "@/components/AgentTrace";
 import OutputPanel from "@/components/OutputPanel";
 import type { BriefItem, AgentEvent } from "@/lib/agent";
+import type { IdeaItem, IdeaEvent } from "@/lib/ideate";
+
+type AnyEvent = AgentEvent | IdeaEvent;
 
 type TraceEntry = {
   id: string;
-  event: AgentEvent;
+  event: AnyEvent;
   timestamp: number;
 };
 
@@ -27,9 +30,12 @@ export default function Home() {
   const [isRunning, setIsRunning] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [summary, setSummary] = useState<{ total_themes: number; total_arr_at_risk: number; total_customers: number } | null>(null);
+  const [ideas, setIdeas] = useState<IdeaItem[]>([]);
+  const [isIdeating, setIsIdeating] = useState(false);
+  const [isIdeateComplete, setIsIdeateComplete] = useState(false);
   const prefix = useId();
 
-  const addTrace = useCallback((event: AgentEvent) => {
+  const addTrace = useCallback((event: AnyEvent) => {
     setTraceEntries((prev) => [
       ...prev,
       { id: `${prefix}-${Date.now()}-${Math.random()}`, event, timestamp: Date.now() },
@@ -42,6 +48,9 @@ export default function Home() {
     setThemes([]);
     setIsComplete(false);
     setSummary(null);
+    setIdeas([]);
+    setIsIdeating(false);
+    setIsIdeateComplete(false);
     setIsRunning(true);
 
     try {
@@ -99,6 +108,61 @@ export default function Home() {
     }
   }, [isRunning, selectedSources, addTrace]);
 
+  const handleIdeate = useCallback(async () => {
+    if (isIdeating || !isComplete || themes.length === 0) return;
+    setIdeas([]);
+    setIsIdeateComplete(false);
+    setIsIdeating(true);
+    addTrace({ type: "trace", message: "── Ideation phase ──────────────────" });
+
+    try {
+      const res = await fetch("/api/ideate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ themes }),
+      });
+
+      if (!res.body) throw new Error("No response body");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const payload = line.slice(6).trim();
+          if (payload === "[DONE]") break;
+
+          try {
+            const event = JSON.parse(payload) as IdeaEvent;
+            addTrace(event);
+
+            if (event.type === "idea") {
+              setIdeas((prev) => [...prev, event.data]);
+            }
+            if (event.type === "idea_complete") {
+              setIsIdeateComplete(true);
+            }
+          } catch {
+            // skip malformed lines
+          }
+        }
+      }
+    } catch (err) {
+      addTrace({ type: "error", message: String(err) });
+    } finally {
+      setIsIdeating(false);
+    }
+  }, [isIdeating, isComplete, themes, addTrace]);
+
   const toggleSource = (id: string) => {
     if (isRunning) return;
     setSelectedSources((prev) =>
@@ -112,20 +176,15 @@ export default function Home() {
     <div className="flex h-screen overflow-hidden bg-[#090909]">
       <Sidebar />
 
-      {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-
         {/* Top bar */}
         <header className="h-14 shrink-0 flex items-center justify-between px-5 border-b border-white/[0.06] bg-[#0c0c0e]/80 backdrop-blur-sm">
-          <div className="flex items-center gap-4">
-            <div>
-              <h1 className="text-sm font-semibold text-white">Analyze</h1>
-              <p className="text-[11px] text-gray-500 leading-none mt-0.5">Synthesize feedback · prioritize by ARR</p>
-            </div>
+          <div>
+            <h1 className="text-sm font-semibold text-white">Analyze</h1>
+            <p className="text-[11px] text-gray-500 leading-none mt-0.5">Synthesize feedback · prioritize by ARR</p>
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Source toggles */}
             <div className="flex items-center gap-1.5">
               {SOURCES.map((src) => {
                 const active = selectedSources.includes(src.id);
@@ -150,16 +209,12 @@ export default function Home() {
             </div>
 
             <div className="w-px h-5 bg-white/[0.08]" />
-
-            {/* Item count */}
             <span className="text-xs text-gray-600">{totalItems} items</span>
-
             <div className="w-px h-5 bg-white/[0.08]" />
 
-            {/* Run button */}
             <button
               onClick={handleAnalyze}
-              disabled={isRunning || selectedSources.length === 0}
+              disabled={isRunning || isIdeating || selectedSources.length === 0}
               className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {isRunning ? (
@@ -179,13 +234,20 @@ export default function Home() {
 
         {/* Split view */}
         <div className="flex-1 grid grid-cols-2 gap-0 min-h-0 overflow-hidden">
-          {/* Left: agent trace */}
           <div className="flex flex-col min-h-0 border-r border-white/[0.06]">
-            <AgentTrace entries={traceEntries} isRunning={isRunning} />
+            <AgentTrace entries={traceEntries} isRunning={isRunning} isIdeating={isIdeating} />
           </div>
-          {/* Right: output */}
           <div className="flex flex-col min-h-0">
-            <OutputPanel themes={themes} isRunning={isRunning} isComplete={isComplete} summary={summary} />
+            <OutputPanel
+              themes={themes}
+              isRunning={isRunning}
+              isComplete={isComplete}
+              summary={summary}
+              ideas={ideas}
+              isIdeating={isIdeating}
+              isIdeateComplete={isIdeateComplete}
+              onIdeate={handleIdeate}
+            />
           </div>
         </div>
       </div>

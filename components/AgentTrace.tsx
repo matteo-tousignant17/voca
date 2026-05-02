@@ -2,28 +2,47 @@
 
 import { useEffect, useRef } from "react";
 import type { AgentEvent } from "@/lib/agent";
+import type { IdeaEvent } from "@/lib/ideate";
+
+type AnyEvent = AgentEvent | IdeaEvent;
 
 type TraceEntry = {
   id: string;
-  event: AgentEvent;
+  event: AnyEvent;
   timestamp: number;
 };
 
 type Props = {
   entries: TraceEntry[];
   isRunning: boolean;
+  isIdeating?: boolean;
 };
 
 const TOOL_META: Record<string, { label: string; color: string }> = {
-  fetch_feedback_sources: { label: "fetch_feedback_sources()", color: "text-sky-400" },
-  get_crm_segments:       { label: "get_crm_segments()",       color: "text-emerald-400" },
-  synthesize_themes:      { label: "synthesize_themes()",      color: "text-violet-400" },
-  calculate_reach_impact: { label: "calculate_reach_impact()", color: "text-amber-400" },
-  generate_prioritized_brief: { label: "generate_prioritized_brief()", color: "text-rose-400" },
+  // Analysis tools
+  fetch_feedback_sources:      { label: "fetch_feedback_sources()",      color: "text-sky-400" },
+  get_crm_segments:            { label: "get_crm_segments()",            color: "text-emerald-400" },
+  synthesize_themes:           { label: "synthesize_themes()",           color: "text-violet-400" },
+  calculate_reach_impact:      { label: "calculate_reach_impact()",      color: "text-amber-400" },
+  generate_prioritized_brief:  { label: "generate_prioritized_brief()",  color: "text-rose-400" },
+  // Ideation tools
+  analyze_competitor_landscape: { label: "analyze_competitor_landscape()", color: "text-sky-400" },
+  map_workflow_opportunities:   { label: "map_workflow_opportunities()",   color: "text-amber-400" },
+  design_automation_solutions:  { label: "design_automation_solutions()",  color: "text-emerald-400" },
+  design_agent_solutions:       { label: "design_agent_solutions()",       color: "text-violet-400" },
+  compile_ideas:                { label: "compile_ideas()",                color: "text-rose-300" },
 };
 
-export default function AgentTrace({ entries, isRunning }: Props) {
+const LENS_COLORS: Record<string, string> = {
+  competitor: "text-sky-300",
+  workflow:   "text-amber-300",
+  automation: "text-emerald-300",
+  agent:      "text-violet-300",
+};
+
+export default function AgentTrace({ entries, isRunning, isIdeating }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
+  const isLive = isRunning || isIdeating;
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -34,11 +53,13 @@ export default function AgentTrace({ entries, isRunning }: Props) {
       {/* Panel header */}
       <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.06] shrink-0">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-gray-400">Agent Trace</span>
-          {isRunning && (
-            <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-mono">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              live
+          <span className="text-xs font-medium text-gray-400">
+            {isIdeating ? "Agent Trace — Ideating" : "Agent Trace"}
+          </span>
+          {isLive && (
+            <span className="flex items-center gap-1 text-[10px] font-mono" style={{ color: isIdeating ? "#818cf8" : "#34d399" }}>
+              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: isIdeating ? "#818cf8" : "#34d399" }} />
+              {isIdeating ? "ideating" : "live"}
             </span>
           )}
         </div>
@@ -55,9 +76,10 @@ export default function AgentTrace({ entries, isRunning }: Props) {
           const { event } = entry;
 
           if (event.type === "trace") {
+            const isSeparator = event.message.startsWith("──");
             return (
-              <div key={entry.id} className="flex gap-2 text-gray-500">
-                <span className="text-gray-700 shrink-0 select-none">›</span>
+              <div key={entry.id} className={`flex gap-2 ${isSeparator ? "text-gray-700 pt-2" : "text-gray-500"}`}>
+                {!isSeparator && <span className="text-gray-700 shrink-0 select-none">›</span>}
                 <span>{event.message}</span>
               </div>
             );
@@ -102,13 +124,33 @@ export default function AgentTrace({ entries, isRunning }: Props) {
             );
           }
 
+          if (event.type === "idea") {
+            const lensColor = LENS_COLORS[event.data.lens] ?? "text-gray-200";
+            return (
+              <div key={entry.id} className="flex gap-2 items-baseline pt-1">
+                <span className="text-indigo-500 shrink-0 select-none">◈</span>
+                <span className={`font-medium ${lensColor}`}>[{event.data.lens}]</span>
+                <span className="text-gray-200">{event.data.title}</span>
+              </div>
+            );
+          }
+
           if (event.type === "complete") {
             return (
               <div key={entry.id} className="mt-3 pt-3 border-t border-white/[0.06]">
-                <div className="text-emerald-400 font-semibold">✓ Complete</div>
+                <div className="text-emerald-400 font-semibold">✓ Analysis complete</div>
                 <div className="text-gray-500 mt-0.5">
                   {event.total_themes} themes · {event.total_customers} customers · ${(event.total_arr_at_risk / 1_000_000).toFixed(1)}M ARR
                 </div>
+              </div>
+            );
+          }
+
+          if (event.type === "idea_complete") {
+            return (
+              <div key={entry.id} className="mt-3 pt-3 border-t border-white/[0.06]">
+                <div className="text-indigo-400 font-semibold">◈ Ideation complete</div>
+                <div className="text-gray-500 mt-0.5">{event.total_ideas} ideas generated</div>
               </div>
             );
           }
@@ -124,7 +166,7 @@ export default function AgentTrace({ entries, isRunning }: Props) {
           return null;
         })}
 
-        {isRunning && (
+        {isLive && (
           <div className="flex gap-0.5 mt-2 text-gray-700">
             <span className="animate-bounce" style={{ animationDelay: "0ms" }}>.</span>
             <span className="animate-bounce" style={{ animationDelay: "150ms" }}>.</span>
