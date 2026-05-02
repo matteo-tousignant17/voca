@@ -209,7 +209,7 @@ export default function Home() {
           {/* Left: FocusPane (idle) or AgentTrace (active) */}
           <div className="flex flex-col min-h-0 border-r border-white/[0.06]">
             {showTrace ? (
-              <AgentTrace entries={traceEntries} isRunning={isRunning} isIdeating={isIdeating} />
+              <AgentTrace entries={traceEntries} isRunning={isRunning} isIdeating={isIdeating} onStop={handleStop} />
             ) : (
               <FocusPane
                 selectedFocus={selectedFocus}

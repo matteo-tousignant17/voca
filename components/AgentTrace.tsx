@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { Square } from "lucide-react";
 import type { AgentEvent } from "@/lib/agent";
 import type { IdeaEvent } from "@/lib/ideate";
 
@@ -16,6 +17,7 @@ type Props = {
   entries: TraceEntry[];
   isRunning: boolean;
   isIdeating?: boolean;
+  onStop?: () => void;
 };
 
 const TOOL_META: Record<string, { label: string; color: string }> = {
@@ -40,7 +42,7 @@ const LENS_COLORS: Record<string, string> = {
   agent:      "text-violet-300",
 };
 
-export default function AgentTrace({ entries, isRunning, isIdeating }: Props) {
+export default function AgentTrace({ entries, isRunning, isIdeating, onStop }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const isLive = isRunning || isIdeating;
 
@@ -176,6 +178,19 @@ export default function AgentTrace({ entries, isRunning, isIdeating }: Props) {
 
         <div ref={bottomRef} />
       </div>
+
+      {/* Stop button — only visible while agent is live */}
+      {isLive && onStop && (
+        <div className="px-4 py-3 border-t border-white/[0.06] shrink-0">
+          <button
+            onClick={onStop}
+            className="w-full flex items-center justify-center gap-1.5 py-2 rounded-md text-xs font-semibold text-white bg-red-600/80 hover:bg-red-600 transition-colors"
+          >
+            <Square size={11} />
+            Stop agent
+          </button>
+        </div>
+      )}
     </div>
   );
 }
