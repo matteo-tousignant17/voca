@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useId, useRef } from "react";
+import { useState, useCallback, useId, useRef, useMemo } from "react";
 import { Square } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import AgentTrace from "@/components/AgentTrace";
@@ -10,6 +10,7 @@ import type { BriefItem, AgentEvent } from "@/lib/agent";
 import type { IdeaItem, IdeaEvent } from "@/lib/ideate";
 import { saveRun } from "@/lib/history";
 import { useAgentMode } from "@/lib/settings";
+import { DEMO_SOURCES } from "@/lib/demo_sources";
 
 type AnyEvent = AgentEvent | IdeaEvent;
 
@@ -19,15 +20,40 @@ type TraceEntry = {
   timestamp: number;
 };
 
-const SOURCES = [
+type SourceOption = {
+  id: string;
+  label: string;
+  count: number;
+  badge_bg?: string;
+  badge_text?: string;
+  initial?: string;
+  initial_bg?: string;
+};
+
+const LIVE_SOURCES: SourceOption[] = [
   { id: "reddit", label: "Reddit", count: 35 },
-  { id: "g2", label: "G2 Reviews", count: 25 },
+  { id: "g2", label: "G2", count: 25 },
   { id: "gong", label: "Gong", count: 14 },
   { id: "support_tickets", label: "Support", count: 28 },
 ];
 
+const DEMO_SOURCE_OPTIONS: SourceOption[] = DEMO_SOURCES.map((s) => ({
+  id: s.id,
+  label: s.short_label,
+  count: s.count,
+  badge_bg: s.badge_bg,
+  badge_text: s.badge_text,
+  initial: s.initial,
+  initial_bg: s.initial_bg,
+}));
+
 export default function Home() {
-  const [selectedSources, setSelectedSources] = useState<string[]>(["reddit", "g2", "gong", "support_tickets"]);
+  const [liveSelected, setLiveSelected] = useState<string[]>([
+    "reddit", "g2", "gong", "support_tickets",
+  ]);
+  const [demoSelected, setDemoSelected] = useState<string[]>(
+    DEMO_SOURCE_OPTIONS.map((s) => s.id),
+  );
   const [selectedFocus, setSelectedFocus] = useState("general");
   const [customFocus, setCustomFocus] = useState("");
   const [traceEntries, setTraceEntries] = useState<TraceEntry[]>([]);
@@ -41,6 +67,10 @@ export default function Home() {
   const mode = useAgentMode();
   const prefix = useId();
   const abortRef = useRef<AbortController | null>(null);
+
+  const sourceOptions: SourceOption[] = mode === "demo" ? DEMO_SOURCE_OPTIONS : LIVE_SOURCES;
+  const selectedSources = mode === "demo" ? demoSelected : liveSelected;
+  const setSelectedSources = mode === "demo" ? setDemoSelected : setLiveSelected;
 
   // Left panel shows FocusPane when idle, AgentTrace when active
   const showTrace = isRunning || isIdeating || traceEntries.length > 0;
@@ -204,7 +234,13 @@ export default function Home() {
     );
   };
 
-  const totalItems = SOURCES.filter((s) => selectedSources.includes(s.id)).reduce((sum, s) => sum + s.count, 0);
+  const totalItems = useMemo(
+    () =>
+      sourceOptions
+        .filter((s) => selectedSources.includes(s.id))
+        .reduce((sum, s) => sum + s.count, 0),
+    [sourceOptions, selectedSources],
+  );
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#090909]">
@@ -230,20 +266,29 @@ export default function Home() {
 
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">
-              {SOURCES.map((src) => {
+              {sourceOptions.map((src) => {
                 const active = selectedSources.includes(src.id);
+                const showInitial = mode === "demo" && src.initial && src.initial_bg;
                 return (
                   <button
                     key={src.id}
                     onClick={() => toggleSource(src.id)}
                     disabled={isRunning || isIdeating}
-                    className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium border transition-all disabled:cursor-not-allowed ${
+                    className={`flex items-center gap-1.5 pl-1.5 pr-2 py-1 rounded-md text-xs font-medium border transition-all disabled:cursor-not-allowed ${
                       active
                         ? "bg-white/[0.07] border-white/[0.12] text-gray-200"
                         : "bg-transparent border-transparent text-gray-600 hover:text-gray-400 hover:border-white/[0.06]"
                     }`}
+                    title={src.label}
                   >
-                    {src.label}
+                    {showInitial ? (
+                      <span
+                        className={`w-4 h-4 rounded ${src.initial_bg} flex items-center justify-center text-[9px] font-bold text-white shrink-0 ${active ? "opacity-100" : "opacity-50"}`}
+                      >
+                        {src.initial}
+                      </span>
+                    ) : null}
+                    <span>{src.label}</span>
                     <span className={`text-[10px] ${active ? "text-gray-500" : "text-gray-700"}`}>
                       {src.count}
                     </span>

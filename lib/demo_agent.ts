@@ -1,7 +1,7 @@
 import type { AgentEvent, BriefItem, ToolResultDetail } from "./agent";
 import { getCRMSegments } from "./tools/get_crm";
+import { DEMO_SOURCES, type DemoSource } from "./demo_sources";
 
-// Total budget ~15 seconds. Keep a sleep helper.
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 type ScriptedTheme = {
@@ -366,9 +366,20 @@ export async function* runDemoAgent(
 ): AsyncGenerator<AgentEvent> {
   const crm = getCRMSegments();
 
-  // Total ~15s budget. Distribute across phases.
+  // Resolve which demo sources are active based on the requested IDs
+  const activeSources: DemoSource[] = sources
+    .map((id) => DEMO_SOURCES.find((d) => d.id === id))
+    .filter((d): d is DemoSource => !!d);
+
+  const sourcesToFetch = activeSources.length > 0 ? activeSources : DEMO_SOURCES;
+  const itemsCount = sourcesToFetch.reduce((s, d) => s + d.count, 0);
+
+  // Phase 0: intro
   yield { type: "trace", message: "Initializing VoC synthesis agent..." };
-  yield { type: "trace", message: `Sources queued: ${sources.join(", ")}` };
+  yield {
+    type: "trace",
+    message: `Sources queued: ${sourcesToFetch.map((s) => s.short_label).join(", ")}`,
+  };
   if (focus && focus !== "general" && focus !== "custom") {
     yield {
       type: "trace",
@@ -376,64 +387,53 @@ export async function* runDemoAgent(
     };
   }
   yield { type: "trace", message: "Running in demo mode (deterministic playback)" };
-  await sleep(600);
+  await sleep(500);
 
-  // Phase 1: fetch_feedback_sources
+  // Phase 1: per-source fetches in a single agent turn
   yield { type: "trace", message: "Agent turn 1..." };
   yield {
     type: "trace",
-    message:
-      "Agent: I'll start by fetching all feedback sources and CRM data simultaneously since these are independent operations.",
+    message: `Agent: I'll fan out ${sourcesToFetch.length} source-specific fetches in parallel — Salesforce notes, Zendesk tickets, Gong calls, G2 reviews, Reddit, Amplitude funnels, and Pendo NPS — since they're independent.`,
   };
   await sleep(700);
 
-  yield {
-    type: "tool_call",
-    tool: "fetch_feedback_sources",
-    input: { sources },
-  };
-  await sleep(1100);
+  // Emit all tool_call events first (looks like parallel fan-out)
+  for (const src of sourcesToFetch) {
+    yield {
+      type: "tool_call",
+      tool: src.tool_name,
+      input: { source: src.id },
+    };
+    await sleep(140);
+  }
 
-  const sourceCounts: Record<string, number> = {
-    reddit: 35,
-    g2: 25,
-    gong: 14,
-    support_tickets: 28,
-  };
-  const totalItems = sources.reduce(
-    (sum, s) => sum + (sourceCounts[s] ?? 0),
-    0
-  );
-  const breakdown = sources
-    .map((s) => `${s}:${sourceCounts[s] ?? 0}`)
-    .join(", ");
-
-  const feedbackDetail: ToolResultDetail = {
-    kind: "table",
-    columns: ["Source", "Items", "Avg sentiment", "Top tier"],
-    rows: [
-      ["reddit", sourceCounts.reddit ?? 0, "mixed (-12 NPS-eq)", "SMB / Mid-Market"],
-      ["g2", sourceCounts.g2 ?? 0, "negative (-22 NPS-eq)", "Mid-Market / Enterprise"],
-      ["gong", sourceCounts.gong ?? 0, "negative (-31 NPS-eq)", "Mid-Market / Enterprise"],
-      ["support_tickets", sourceCounts.support_tickets ?? 0, "very negative (-44 NPS-eq)", "All tiers"],
-    ].filter((r) => sources.includes(r[0] as string)),
-  };
-
-  yield {
-    type: "tool_result",
-    tool: "fetch_feedback_sources",
-    summary: `Fetched ${totalItems} feedback items across ${sources.length} sources (${breakdown})`,
-    details: feedbackDetail,
-  };
-  await sleep(700);
+  // Then stream tool_result events as they "complete"
+  for (const src of sourcesToFetch) {
+    await sleep(420);
+    yield {
+      type: "tool_result",
+      tool: src.tool_name,
+      summary: src.fetch_summary,
+      details: src.fetch_details,
+    };
+  }
+  await sleep(400);
 
   // Phase 2: get_crm_segments
+  yield { type: "trace", message: "Agent turn 2..." };
+  yield {
+    type: "trace",
+    message:
+      "Agent: Loading Salesforce CRM segmentation to weight feedback by customer value and named churn risk.",
+  };
+  await sleep(500);
+
   yield {
     type: "tool_call",
     tool: "get_crm_segments",
     input: {},
   };
-  await sleep(900);
+  await sleep(700);
 
   const crmDetail: ToolResultDetail = {
     kind: "table",
@@ -453,16 +453,16 @@ export async function* runDemoAgent(
     summary: `Loaded CRM: ${crm.total_customers} customers, $${(crm.total_arr / 1_000_000).toFixed(1)}M ARR · 14 named at-risk accounts ($1.45M exposure)`,
     details: crmDetail,
   };
-  await sleep(800);
+  await sleep(500);
 
   // Phase 3: synthesize_themes
-  yield { type: "trace", message: "Agent turn 2..." };
+  yield { type: "trace", message: "Agent turn 3..." };
   yield {
     type: "trace",
     message:
-      "Agent: Clustering feedback into distinct problem themes — looking for cross-source patterns and severity signals.",
+      "Agent: Clustering across all 7 sources — looking for cross-channel patterns and severity signals.",
   };
-  await sleep(600);
+  await sleep(450);
 
   yield {
     type: "tool_call",
@@ -471,18 +471,18 @@ export async function* runDemoAgent(
   };
   yield {
     type: "trace",
-    message: `Clustering ${totalItems} items into themes...`,
+    message: `Clustering ${itemsCount} items into themes...`,
   };
-  await sleep(1700);
+  await sleep(1500);
 
   const synthesisDetail: ToolResultDetail = {
     kind: "table",
-    columns: ["Theme", "Severity", "Frequency", "Segments"],
+    columns: ["Theme", "Severity", "Frequency", "Top sources"],
     rows: SCRIPTED_THEMES.map((t) => [
       t.name,
       t.severity,
       Math.round(t.customers_affected / 22),
-      t.affected_segments.join(", "),
+      themeSourceLabel(t.name, sourcesToFetch),
     ]),
   };
 
@@ -492,23 +492,23 @@ export async function* runDemoAgent(
     summary: `Synthesized ${SCRIPTED_THEMES.length} themes (2 critical, 3 high, 1 medium)`,
     details: synthesisDetail,
   };
-  await sleep(900);
+  await sleep(600);
 
   // Phase 4: calculate_reach_impact
-  yield { type: "trace", message: "Agent turn 3..." };
+  yield { type: "trace", message: "Agent turn 4..." };
   yield {
     type: "trace",
     message:
       "Agent: Cross-referencing themes against CRM segments and mapping named at-risk accounts.",
   };
-  await sleep(600);
+  await sleep(450);
 
   yield {
     type: "tool_call",
     tool: "calculate_reach_impact",
     input: {},
   };
-  await sleep(1300);
+  await sleep(1000);
 
   const totalARRRisk = SCRIPTED_THEMES.reduce(
     (s, t) => s + t.arr_at_risk,
@@ -537,23 +537,23 @@ export async function* runDemoAgent(
     summary: `Calculated impact: $${(totalARRRisk / 1_000_000).toFixed(1)}M ARR at risk · ${namedCount} named at-risk accounts mapped`,
     details: impactDetail,
   };
-  await sleep(800);
+  await sleep(500);
 
   // Phase 5: generate_prioritized_brief
-  yield { type: "trace", message: "Agent turn 4..." };
+  yield { type: "trace", message: "Agent turn 5..." };
   yield {
     type: "trace",
     message:
       "Agent: Composing the prioritized brief, ranking by ARR at risk and attaching tradeoffs + suggested actions.",
   };
-  await sleep(600);
+  await sleep(450);
 
   yield {
     type: "tool_call",
     tool: "generate_prioritized_brief",
     input: {},
   };
-  await sleep(1200);
+  await sleep(900);
 
   const brief = rankedBrief();
 
@@ -571,12 +571,11 @@ export async function* runDemoAgent(
     summary: `Generated prioritized brief with ${brief.length} ranked items`,
     details: briefDetail,
   };
-  await sleep(500);
+  await sleep(350);
 
-  // Stream theme cards (each one ~250ms)
   for (const item of brief) {
     yield { type: "theme", data: item };
-    await sleep(250);
+    await sleep(200);
   }
 
   const totalARR = brief.reduce((s, i) => s + i.arr_at_risk, 0);
@@ -588,3 +587,20 @@ export async function* runDemoAgent(
     total_customers: totalCustomers,
   };
 }
+
+function themeSourceLabel(themeName: string, available: DemoSource[]): string {
+  const ids = THEME_SOURCE_MAP[themeName] ?? [];
+  const labels = ids
+    .map((id) => available.find((s) => s.id === id)?.short_label)
+    .filter((x): x is string => !!x);
+  return labels.join(" · ") || "—";
+}
+
+const THEME_SOURCE_MAP: Record<string, string[]> = {
+  "Real-time collaboration data loss": ["gong", "g2", "zendesk", "salesforce"],
+  "Enterprise audit log + governance gaps": ["salesforce", "gong", "g2", "zendesk"],
+  "Offline mode + mobile performance": ["reddit", "g2", "amplitude", "pendo"],
+  "Search quality at scale": ["g2", "amplitude", "zendesk", "pendo"],
+  "AI add-on context awareness": ["g2", "pendo", "salesforce"],
+  "Pricing transparency & guest seat model": ["g2", "zendesk", "reddit"],
+};

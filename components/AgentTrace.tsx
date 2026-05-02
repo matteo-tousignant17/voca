@@ -26,6 +26,14 @@ const TOOL_META: Record<string, { label: string; color: string }> = {
   synthesize_themes:           { label: "synthesize_themes()",           color: "text-violet-400" },
   calculate_reach_impact:      { label: "calculate_reach_impact()",      color: "text-amber-400" },
   generate_prioritized_brief:  { label: "generate_prioritized_brief()",  color: "text-rose-400" },
+  // Per-source fetch tools (demo mode)
+  fetch_salesforce_notes:      { label: "fetch_salesforce_notes()",      color: "text-sky-300" },
+  fetch_zendesk_tickets:       { label: "fetch_zendesk_tickets()",       color: "text-emerald-300" },
+  fetch_gong_transcripts:      { label: "fetch_gong_transcripts()",      color: "text-violet-300" },
+  fetch_g2_reviews:            { label: "fetch_g2_reviews()",            color: "text-rose-300" },
+  fetch_reddit_posts:          { label: "fetch_reddit_posts()",          color: "text-orange-300" },
+  fetch_amplitude_signals:     { label: "fetch_amplitude_signals()",     color: "text-indigo-300" },
+  fetch_pendo_signals:         { label: "fetch_pendo_signals()",         color: "text-amber-300" },
   // Ideation tools
   analyze_competitor_landscape: { label: "analyze_competitor_landscape()", color: "text-sky-400" },
   map_workflow_opportunities:   { label: "map_workflow_opportunities()",   color: "text-amber-400" },
