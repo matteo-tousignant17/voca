@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Plus, CheckCircle2, ExternalLink, ChevronRight, Info } from "lucide-react";
+import { Search, Plus, CheckCircle2, ExternalLink, Info, LayoutGrid, List } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 
 type IntegrationStatus = "connected" | "available" | "coming_soon";
 type Via = "merge" | "direct" | "mcp" | "scrape";
+type ViewMode = "grid" | "list";
 
 type Integration = {
   id: string;
@@ -438,7 +439,7 @@ function StatusBadge({ status, lastSync }: { status: IntegrationStatus; lastSync
   }
   if (status === "coming_soon") {
     return (
-      <span className="text-[10px] text-gray-600 bg-white/[0.04] border border-white/[0.06] px-2 py-0.5 rounded-full">
+      <span className="text-[10px] text-gray-600 bg-white/[0.04] border border-white/[0.06] px-1.5 py-0.5 rounded-full">
         Coming soon
       </span>
     );
@@ -452,56 +453,55 @@ function IntegrationCard({ integration }: { integration: Integration }) {
   const isSoon = integration.status === "coming_soon";
 
   return (
-    <div className={`group rounded-lg border bg-[#111113] p-4 flex flex-col gap-3 transition-colors ${
-      isSoon
-        ? "border-white/[0.04] opacity-50"
-        : "border-white/[0.07] hover:border-white/[0.12]"
-    }`}>
+    <div
+      title={integration.description}
+      className={`group relative rounded-lg border bg-[#111113] px-3.5 py-3 flex flex-col gap-2 transition-colors ${
+        isSoon
+          ? "border-white/[0.04] opacity-50"
+          : "border-white/[0.07] hover:border-white/[0.12]"
+      }`}
+    >
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2.5">
-          <div className={`w-8 h-8 rounded-lg ${integration.color} flex items-center justify-center text-xs font-bold text-white shrink-0`}>
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className={`w-7 h-7 rounded-md ${integration.color} flex items-center justify-center text-[11px] font-bold text-white shrink-0`}>
             {integration.initial}
           </div>
-          <div>
-            <div className="text-sm font-semibold text-white leading-none">{integration.name}</div>
+          <div className="min-w-0">
+            <div className="text-[13px] font-semibold text-white leading-none truncate">{integration.name}</div>
             <div className="mt-1">
               <StatusBadge status={integration.status} lastSync={integration.lastSync} />
             </div>
           </div>
         </div>
 
-        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded border ${via.color} shrink-0`} title={via.tooltip}>
+        <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded border ${via.color} shrink-0`} title={via.tooltip}>
           {via.label}
         </span>
       </div>
 
-      {/* Description */}
-      <p className="text-gray-500 text-xs leading-relaxed flex-1">{integration.description}</p>
-
-      {/* Feedback types */}
+      {/* Feedback types — the description replacement */}
       <div className="flex gap-1 flex-wrap">
         {integration.feedbackTypes.map((t) => (
-          <span key={t} className="text-[10px] text-gray-600 bg-white/[0.03] border border-white/[0.05] px-1.5 py-0.5 rounded-md">
+          <span key={t} className="text-[9px] text-gray-500 bg-white/[0.02] px-1.5 py-0.5 rounded">
             {t}
           </span>
         ))}
       </div>
 
-      {/* Action */}
+      {/* Action row */}
       <div className="flex items-center justify-between pt-0.5">
         {isConnected ? (
           <button className="flex items-center gap-1 text-[11px] text-gray-500 hover:text-gray-300 transition-colors">
-            <CheckCircle2 size={12} className="text-emerald-500" />
+            <CheckCircle2 size={11} className="text-emerald-500" />
             Manage
           </button>
         ) : isSoon ? (
           <span className="text-[11px] text-gray-700">Not yet available</span>
         ) : (
-          <button className="flex items-center gap-1.5 text-[11px] font-medium text-violet-400 hover:text-violet-300 transition-colors">
-            <Plus size={12} />
+          <button className="flex items-center gap-1 text-[11px] font-medium text-violet-400 hover:text-violet-300 transition-colors">
+            <Plus size={11} />
             Connect
-            <ChevronRight size={11} />
           </button>
         )}
 
@@ -510,7 +510,7 @@ function IntegrationCard({ integration }: { integration: Integration }) {
             href={integration.docsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[10px] text-gray-700 hover:text-gray-500 flex items-center gap-0.5 transition-colors"
+            className="text-[10px] text-gray-700 hover:text-gray-500 flex items-center gap-0.5 transition-colors opacity-0 group-hover:opacity-100"
             onClick={(e) => e.stopPropagation()}
           >
             Docs <ExternalLink size={9} />
@@ -521,8 +521,75 @@ function IntegrationCard({ integration }: { integration: Integration }) {
   );
 }
 
+function IntegrationRow({ integration }: { integration: Integration }) {
+  const via = VIA_LABELS[integration.via];
+  const isConnected = integration.status === "connected";
+  const isSoon = integration.status === "coming_soon";
+
+  return (
+    <div
+      title={integration.description}
+      className={`group rounded-md border bg-[#111113] px-3 py-1.5 flex items-center gap-3 transition-colors ${
+        isSoon
+          ? "border-white/[0.04] opacity-50"
+          : "border-white/[0.07] hover:border-white/[0.12]"
+      }`}
+    >
+      {/* Logo */}
+      <div className={`w-6 h-6 rounded ${integration.color} flex items-center justify-center text-[10px] font-bold text-white shrink-0`}>
+        {integration.initial}
+      </div>
+
+      {/* Name + status */}
+      <div className="flex items-center gap-2 min-w-0 w-40 shrink-0">
+        <div className="text-[13px] font-semibold text-white truncate">{integration.name}</div>
+      </div>
+
+      {/* Via badge */}
+      <span
+        className={`text-[9px] font-medium px-1.5 py-0.5 rounded border ${via.color} shrink-0`}
+        title={via.tooltip}
+      >
+        {via.label}
+      </span>
+
+      {/* Tags */}
+      <div className="flex gap-1 flex-wrap min-w-0 flex-1 overflow-hidden">
+        {integration.feedbackTypes.map((t) => (
+          <span key={t} className="text-[9px] text-gray-500 bg-white/[0.02] px-1.5 py-0.5 rounded whitespace-nowrap">
+            {t}
+          </span>
+        ))}
+      </div>
+
+      {/* Status */}
+      <div className="shrink-0">
+        <StatusBadge status={integration.status} lastSync={integration.lastSync} />
+      </div>
+
+      {/* Action */}
+      <div className="shrink-0 w-20 flex justify-end">
+        {isConnected ? (
+          <button className="flex items-center gap-1 text-[11px] text-gray-500 hover:text-gray-300 transition-colors">
+            <CheckCircle2 size={11} className="text-emerald-500" />
+            Manage
+          </button>
+        ) : isSoon ? (
+          <span className="text-[11px] text-gray-700">—</span>
+        ) : (
+          <button className="flex items-center gap-1 text-[11px] font-medium text-violet-400 hover:text-violet-300 transition-colors">
+            <Plus size={11} />
+            Connect
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function SourcesPage() {
   const [search, setSearch] = useState("");
+  const [view, setView] = useState<ViewMode>("grid");
 
   const connectedCount = CATEGORIES.flatMap((c) => c.integrations).filter((i) => i.status === "connected").length;
   const totalCount = CATEGORIES.flatMap((c) => c.integrations).length;
@@ -566,6 +633,30 @@ export default function SourcesPage() {
               />
             </div>
 
+            {/* View toggle */}
+            <div className="flex items-center rounded-md border border-white/[0.08] bg-white/[0.04] overflow-hidden">
+              <button
+                onClick={() => setView("grid")}
+                aria-label="Grid view"
+                title="Grid view"
+                className={`p-1.5 transition-colors ${
+                  view === "grid" ? "bg-white/[0.06] text-gray-200" : "text-gray-500 hover:text-gray-300"
+                }`}
+              >
+                <LayoutGrid size={13} />
+              </button>
+              <button
+                onClick={() => setView("list")}
+                aria-label="List view"
+                title="List view"
+                className={`p-1.5 transition-colors ${
+                  view === "list" ? "bg-white/[0.06] text-gray-200" : "text-gray-500 hover:text-gray-300"
+                }`}
+              >
+                <List size={13} />
+              </button>
+            </div>
+
             {/* Merge info chip */}
             <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-violet-500/10 border border-violet-500/20">
               <span className="text-[10px] font-semibold text-violet-400">Merge.dev</span>
@@ -576,7 +667,7 @@ export default function SourcesPage() {
         </header>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-8">
+        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-6">
           {/* Merge.dev callout */}
           <div className="rounded-lg border border-violet-500/20 bg-violet-500/[0.04] px-4 py-3 flex items-start gap-3">
             <div className="w-6 h-6 rounded bg-violet-500/20 flex items-center justify-center shrink-0 mt-0.5">
@@ -593,12 +684,20 @@ export default function SourcesPage() {
 
           {filteredCategories.map((cat) => (
             <section key={cat.id}>
-              <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">{cat.label}</h2>
-              <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
-                {cat.integrations.map((integration) => (
-                  <IntegrationCard key={integration.id} integration={integration} />
-                ))}
-              </div>
+              <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">{cat.label}</h2>
+              {view === "grid" ? (
+                <div className="grid grid-cols-2 xl:grid-cols-3 gap-2.5">
+                  {cat.integrations.map((integration) => (
+                    <IntegrationCard key={integration.id} integration={integration} />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1.5">
+                  {cat.integrations.map((integration) => (
+                    <IntegrationRow key={integration.id} integration={integration} />
+                  ))}
+                </div>
+              )}
             </section>
           ))}
 
