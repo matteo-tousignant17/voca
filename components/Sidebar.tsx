@@ -33,7 +33,6 @@ export default function Sidebar() {
           </div>
           <div className="leading-none">
             <div className="text-sm font-semibold text-white tracking-tight">VoC Agent</div>
-            <div className="text-[10px] text-gray-500 mt-0.5">by Claude</div>
           </div>
         </div>
       </div>

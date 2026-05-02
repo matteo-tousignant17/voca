@@ -209,7 +209,6 @@ export default function Home() {
         <header className="h-14 shrink-0 flex items-center justify-between px-5 border-b border-white/[0.06] bg-[#0c0c0e]/80 backdrop-blur-sm">
           <div>
             <h1 className="text-sm font-semibold text-white">Analyze</h1>
-            <p className="text-[11px] text-gray-500 leading-none mt-0.5">Synthesize feedback · prioritize by ARR</p>
           </div>
 
           <div className="flex items-center gap-3">
