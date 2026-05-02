@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useCallback, KeyboardEvent } from "react";
-import { Brain, ChevronRight, Cpu } from "lucide-react";
+import { Brain, ChevronRight, Cpu, Square } from "lucide-react";
 import type { AgentEvent, ToolResultDetail } from "@/lib/agent";
 import type { IdeaEvent } from "@/lib/ideate";
 
@@ -18,6 +18,7 @@ type Props = {
   isRunning: boolean;
   isIdeating?: boolean;
   onFollowUp?: (text: string) => void;
+  onStop?: () => void;
 };
 
 const TOOL_META: Record<string, { label: string; color: string; dot: string }> = {
@@ -291,7 +292,7 @@ function buildView(entries: TraceEntry[]): RenderedEntry[] {
   return out;
 }
 
-export default function AgentTrace({ entries, isRunning, isIdeating, onFollowUp }: Props) {
+export default function AgentTrace({ entries, isRunning, isIdeating, onFollowUp, onStop }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const isLive = isRunning || isIdeating;
@@ -364,6 +365,15 @@ export default function AgentTrace({ entries, isRunning, isIdeating, onFollowUp 
           )}
         </div>
         <div className="flex items-center gap-3">
+          {isLive && onStop && (
+            <button
+              onClick={onStop}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold text-white bg-red-600/80 hover:bg-red-600 transition-colors"
+            >
+              <Square size={10} />
+              Stop
+            </button>
+          )}
           <span className="hidden sm:flex items-center gap-1 text-[10px] text-gray-700 font-mono">
             <span className="flex items-center gap-1">
               <Brain size={10} className="text-violet-400/70" />

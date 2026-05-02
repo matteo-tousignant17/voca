@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback, useId, useRef } from "react";
-import { Zap, Square } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import AgentTrace from "@/components/AgentTrace";
 import OutputPanel from "@/components/OutputPanel";
@@ -215,54 +214,12 @@ export default function Home() {
       <Sidebar />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Top bar */}
-        <header className="h-14 shrink-0 flex items-center justify-between px-5 border-b border-white/[0.06] bg-[#0c0c0e]/80 backdrop-blur-sm">
-          <div className="flex items-center gap-2.5">
-            <div>
-              <h1 className="text-sm font-semibold text-white">Analyze</h1>
-              <p className="text-[11px] text-gray-500 leading-none mt-0.5">Synthesize feedback · prioritize by ARR</p>
-            </div>
-            {mode === "demo" && (
-              <span
-                className="text-[10px] font-semibold text-emerald-300 bg-emerald-500/[0.08] border border-emerald-500/20 px-2 py-0.5 rounded-md"
-                title="Deterministic playback — change in Settings"
-              >
-                DEMO MODE
-              </span>
-            )}
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button
-              onClick={isRunning || isIdeating ? handleStop : () => handleAnalyze()}
-              disabled={!isRunning && !isIdeating && selectedSources.length === 0}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-semibold text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-                isRunning || isIdeating
-                  ? "bg-red-600/80 hover:bg-red-600"
-                  : "bg-violet-600 hover:bg-violet-500"
-              }`}
-            >
-              {isRunning || isIdeating ? (
-                <>
-                  <Square size={11} />
-                  Stop
-                </>
-              ) : (
-                <>
-                  <Zap size={12} />
-                  Run Agent
-                </>
-              )}
-            </button>
-          </div>
-        </header>
-
         {/* Split view — trace:output 35:65 */}
         <div className="flex-1 grid grid-cols-[35fr_65fr] gap-0 min-h-0 overflow-hidden">
           {/* Left: FocusPane (idle) or AgentTrace (active) */}
           <div className="flex flex-col min-h-0 border-r border-white/[0.06]">
             {showTrace ? (
-              <AgentTrace entries={traceEntries} isRunning={isRunning} isIdeating={isIdeating} onFollowUp={handleFollowUp} />
+              <AgentTrace entries={traceEntries} isRunning={isRunning} isIdeating={isIdeating} onFollowUp={handleFollowUp} onStop={handleStop} />
             ) : (
               <FocusPane
                 selectedFocus={selectedFocus}
@@ -271,6 +228,7 @@ export default function Home() {
                 onCustomFocus={setCustomFocus}
                 onRun={() => handleAnalyze()}
                 disabled={selectedSources.length === 0}
+                mode={mode}
               />
             )}
           </div>
