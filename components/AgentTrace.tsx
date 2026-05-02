@@ -161,7 +161,23 @@ type RenderedEntry =
   | { kind: "theme"; id: string; rank: number; name: string; arr: number }
   | { kind: "idea"; id: string; lens: string; title: string }
   | { kind: "complete"; id: string; themes: number; customers: number; arr: number }
-  | { kind: "idea_complete"; id: string; total: number }
+  | {
+      kind: "idea_complete";
+      id: string;
+      total: number;
+      trace_lines?: string[];
+      ideas_detail?: Array<{
+        theme_name: string;
+        lens: string;
+        title: string;
+        summary: string;
+        key_insight: string;
+        tactics: string[];
+        effort: string;
+        impact: string;
+        timeframe: string;
+      }>;
+    }
   | { kind: "error"; id: string; message: string };
 
 function buildView(entries: TraceEntry[]): RenderedEntry[] {
@@ -280,7 +296,13 @@ function buildView(entries: TraceEntry[]): RenderedEntry[] {
     }
 
     if (ev.type === "idea_complete") {
-      out.push({ kind: "idea_complete", id, total: ev.total_ideas });
+      out.push({
+        kind: "idea_complete",
+        id,
+        total: ev.total_ideas,
+        trace_lines: ev.trace_lines,
+        ideas_detail: ev.ideas_detail,
+      });
       return;
     }
 
@@ -554,10 +576,70 @@ export default function AgentTrace({ entries, isRunning, isIdeating, onFollowUp,
           }
 
           if (node.kind === "idea_complete") {
+            const hasDetails = (node.ideas_detail?.length ?? 0) > 0;
+            const isOpen = !!expanded[node.id];
             return (
               <div key={node.id} className="mt-3 pt-3 border-t border-white/[0.06] px-2">
                 <div className="text-indigo-400 font-semibold">◈ Ideation complete</div>
                 <div className="text-gray-500 mt-0.5">{node.total} ideas generated</div>
+                {node.trace_lines?.map((line, i) => (
+                  <div key={i} className="text-gray-400 mt-1 text-[11px] leading-relaxed">
+                    {line}
+                  </div>
+                ))}
+                {hasDetails && (
+                  <button
+                    type="button"
+                    onClick={() => setExpanded((p) => ({ ...p, [node.id]: !p[node.id] }))}
+                    className="flex items-center gap-1.5 mt-2 text-left text-[10px] font-semibold text-gray-500 hover:text-gray-300 transition-colors"
+                  >
+                    <ChevronRight
+                      size={11}
+                      className={`shrink-0 text-gray-700 transition-transform ${isOpen ? "rotate-90" : ""}`}
+                    />
+                    Solutions · tactics ({node.ideas_detail!.length})
+                  </button>
+                )}
+                {hasDetails && isOpen && (
+                  <div className="mt-2 space-y-2.5 px-1">
+                    {node.ideas_detail!.map((idea, idx) => {
+                      const lensColor = LENS_COLORS[idea.lens] ?? "text-gray-300";
+                      return (
+                        <div
+                          key={`${idea.theme_name}-${idea.lens}-${idx}`}
+                          className="rounded-md border border-white/[0.06] bg-white/[0.02] px-3 py-2.5"
+                        >
+                          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                            <span className={`text-[10px] font-semibold uppercase tracking-wide ${lensColor}`}>
+                              [{idea.lens}]
+                            </span>
+                            <span className="text-[11px] text-gray-600 truncate max-w-full">{idea.theme_name}</span>
+                          </div>
+                          <p className="text-[12px] font-semibold text-gray-100 mt-1 leading-snug">{idea.title}</p>
+                          <p className="text-[11px] text-gray-400 mt-1.5 leading-relaxed">{idea.summary}</p>
+                          <p className="text-[10px] text-violet-400/80 mt-2 leading-relaxed border-l-2 border-violet-500/25 pl-2">
+                            Insight: {idea.key_insight}
+                          </p>
+                          {idea.tactics.length > 0 && (
+                            <ul className="mt-2 space-y-1">
+                              {idea.tactics.map((t) => (
+                                <li key={t} className="text-[10px] text-gray-500 leading-relaxed flex gap-1.5">
+                                  <span className="text-gray-700 shrink-0">·</span>
+                                  <span>{t}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                          <div className="flex flex-wrap gap-2 mt-2.5 pt-2 border-t border-white/[0.04]">
+                            <span className="text-[9px] font-mono text-gray-600">effort {idea.effort}</span>
+                            <span className="text-[9px] font-mono text-gray-600">impact {idea.impact}</span>
+                            <span className="text-[9px] font-mono text-gray-600">{idea.timeframe}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             );
           }

@@ -21,12 +21,32 @@ export type IdeaItem = {
   timeframe: string;
 };
 
+/** Slim snapshot for expandable ideation-complete block in Agent Trace */
+export type IdeationResultSummaryRow = {
+  theme_name: string;
+  lens: IdeaLens;
+  title: string;
+  summary: string;
+  key_insight: string;
+  tactics: string[];
+  effort: IdeaItem["effort"];
+  impact: IdeaItem["impact"];
+  timeframe: string;
+};
+
 export type IdeaEvent =
   | { type: "trace"; message: string }
   | { type: "tool_call"; tool: string; input: Record<string, unknown> }
   | { type: "tool_result"; tool: string; summary: string; details?: ToolResultDetail }
   | { type: "idea"; data: IdeaItem }
-  | { type: "idea_complete"; total_ideas: number }
+  | {
+      type: "idea_complete";
+      total_ideas: number;
+      /** Lines shown under “Ideation complete” (e.g. completion blurb). */
+      trace_lines?: string[];
+      /** Per-idea payloads for expandable details in trace. */
+      ideas_detail?: IdeationResultSummaryRow[];
+    }
   | { type: "error"; message: string };
 
 const client = new Anthropic();
@@ -324,6 +344,36 @@ Be specific. Reference actual Notion behavior and named competitors. Ideas must 
   const lensState = new Map<string, InsightItem[]>();
   let finalIdeas: IdeaItem[] | null = null;
 
+  const emitIdeaCompleteEvent = (): Extract<IdeaEvent, { type: "idea_complete" }> => {
+    const ideas = finalIdeas ?? [];
+    const themeCount =
+      ideas.length === 0
+        ? top3.length
+        : new Set(ideas.map((i) => i.theme_name)).size;
+    return {
+      type: "idea_complete",
+      total_ideas: ideas.length,
+      trace_lines:
+        ideas.length > 0
+          ? [`✓ Ideation complete — ${ideas.length} ideas (${themeCount} themes × ${LENS_ORDER.length} lenses)`]
+          : undefined,
+      ideas_detail:
+        ideas.length > 0
+          ? ideas.map((i) => ({
+              theme_name: i.theme_name,
+              lens: i.lens,
+              title: i.title,
+              summary: i.summary,
+              key_insight: i.key_insight,
+              tactics: i.tactics,
+              effort: i.effort,
+              impact: i.impact,
+              timeframe: i.timeframe,
+            }))
+          : undefined,
+    };
+  };
+
   for (let iteration = 0; iteration < 8; iteration++) {
     yield { type: "trace", message: `Ideation turn ${iteration + 1}…` };
 
@@ -339,7 +389,7 @@ Be specific. Reference actual Notion behavior and named competitors. Ideas must 
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       yield { type: "error", message: `Ideation API failed (${msg}). Check ANTHROPIC_API_KEY / network.` };
-      yield { type: "idea_complete", total_ideas: finalIdeas?.length ?? 0 };
+      yield emitIdeaCompleteEvent();
       return;
     }
 
@@ -433,12 +483,12 @@ Be specific. Reference actual Notion behavior and named competitors. Ideas must 
     }
 
     if (finalIdeas && finalIdeas.length > 0) {
-      yield { type: "idea_complete", total_ideas: finalIdeas.length };
+      yield emitIdeaCompleteEvent();
       return;
     }
 
     if (response.stop_reason === "end_turn") break;
   }
 
-  yield { type: "idea_complete", total_ideas: finalIdeas?.length ?? 0 };
+  yield emitIdeaCompleteEvent();
 }

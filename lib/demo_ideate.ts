@@ -1,5 +1,5 @@
 import type { BriefItem } from "./agent";
-import type { IdeaEvent, IdeaItem, IdeaLens } from "./ideate";
+import type { IdeaEvent, IdeaItem, IdeaLens, IdeationResultSummaryRow } from "./ideate";
 import {
   DEMO_COLLABORATION_DATA_LOSS_THEME,
   COLLABORATION_IDEATE_FOCUS_MARKER,
@@ -149,9 +149,25 @@ export async function* runDemoIdeateAgent(
     await sleep(120);
   }
 
-  yield { type: "idea_complete", total_ideas: ideasOut.length };
+  const themeCount = new Set(ideasOut.map((i) => i.theme_name)).size;
+  const ideas_detail: IdeationResultSummaryRow[] = ideasOut.map((i) => ({
+    theme_name: i.theme_name,
+    lens: i.lens,
+    title: i.title,
+    summary: i.summary,
+    key_insight: i.key_insight,
+    tactics: i.tactics,
+    effort: i.effort,
+    impact: i.impact,
+    timeframe: i.timeframe,
+  }));
+
   yield {
-    type: "trace",
-    message: `✓ Ideation complete — ${ideasOut.length} ideas (${top3.length} themes × ${LENS_ORDER.length} lenses)`,
+    type: "idea_complete",
+    total_ideas: ideasOut.length,
+    trace_lines: [
+      `✓ Ideation complete — ${ideasOut.length} ideas (${themeCount} themes × ${LENS_ORDER.length} lenses)`,
+    ],
+    ideas_detail,
   };
 }
