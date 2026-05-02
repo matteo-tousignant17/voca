@@ -19,10 +19,10 @@ type TraceEntry = {
 };
 
 const SOURCES = [
-  { id: "reddit", label: "Reddit", count: 15 },
-  { id: "g2", label: "G2 Reviews", count: 10 },
-  { id: "gong", label: "Gong", count: 4 },
-  { id: "support_tickets", label: "Support", count: 12 },
+  { id: "reddit", label: "Reddit", count: 35 },
+  { id: "g2", label: "G2 Reviews", count: 25 },
+  { id: "gong", label: "Gong", count: 14 },
+  { id: "support_tickets", label: "Support", count: 28 },
 ];
 
 export default function Home() {
