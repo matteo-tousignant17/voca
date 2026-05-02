@@ -47,10 +47,16 @@ export type BriefItem = {
   churn_signal: string;
 };
 
+export type ToolResultDetail =
+  | { kind: "kv"; rows: Array<{ label: string; value: string }> }
+  | { kind: "list"; items: string[] }
+  | { kind: "table"; columns: string[]; rows: Array<Array<string | number>> }
+  | { kind: "quotes"; items: Array<{ quote: string; source: string; tier?: string }> };
+
 export type AgentEvent =
   | { type: "trace"; message: string }
   | { type: "tool_call"; tool: string; input: Record<string, unknown> }
-  | { type: "tool_result"; tool: string; summary: string }
+  | { type: "tool_result"; tool: string; summary: string; details?: ToolResultDetail }
   | { type: "theme"; data: BriefItem }
   | { type: "complete"; total_themes: number; total_arr_at_risk: number; total_customers: number }
   | { type: "error"; message: string };
@@ -446,7 +452,15 @@ Between tool calls, write a single short sentence (≤ 20 words) explaining what
             const breakdown = Array.from(bySource.entries()).map(([k, v]) => `${k}:${v}`).join(", ");
             summary = `Fetched ${items.length} feedback items across ${requested.length} sources (${breakdown})`;
             resultPayload = { total_items: items.length, sources_loaded: requested, by_source: Object.fromEntries(bySource) };
-            yield { type: "tool_result", tool: block.name, summary };
+            yield {
+              type: "tool_result",
+              tool: block.name,
+              summary,
+              details: {
+                kind: "kv",
+                rows: Array.from(bySource.entries()).map(([k, v]) => ({ label: k, value: String(v) })),
+              },
+            };
           } else if (block.name === "get_crm_segments") {
             const crm = getCRMSegments();
             state.crm = crm;
@@ -469,7 +483,22 @@ Between tool calls, write a single short sentence (≤ 20 words) explaining what
                 }]),
               ),
             };
-            yield { type: "tool_result", tool: block.name, summary };
+            yield {
+              type: "tool_result",
+              tool: block.name,
+              summary,
+              details: {
+                kind: "table",
+                columns: ["Segment", "Customers", "Total ARR", "NPS (6mo)", "Churned 90d"],
+                rows: Object.values(crm.segments).map((s) => [
+                  s.label,
+                  s.customers,
+                  `$${(s.total_arr / 1_000_000).toFixed(1)}M`,
+                  `${s.nps_current ?? "—"} (${(s.nps_trend_6mo ?? 0) > 0 ? "+" : ""}${s.nps_trend_6mo ?? 0})`,
+                  `$${Math.round((s.recent_churned_arr_90d ?? 0) / 1000)}K`,
+                ]),
+              },
+            };
           } else if (block.name === "synthesize_themes") {
             if (!state.feedback) {
               throw new Error("synthesize_themes called before fetch_feedback_sources");
@@ -494,7 +523,21 @@ Between tool calls, write a single short sentence (≤ 20 words) explaining what
                 evidence_count: t.evidence?.length ?? 0,
               })),
             };
-            yield { type: "tool_result", tool: block.name, summary };
+            yield {
+              type: "tool_result",
+              tool: block.name,
+              summary,
+              details: {
+                kind: "table",
+                columns: ["Theme", "Severity", "Frequency", "Segments"],
+                rows: themes.map((t) => [
+                  t.name,
+                  t.severity,
+                  t.frequency,
+                  (t.affected_segments ?? []).join(", "),
+                ]),
+              },
+            };
           } else if (block.name === "calculate_reach_impact") {
             if (!state.themes || !state.crm) {
               throw new Error("calculate_reach_impact called before themes/crm are ready");
@@ -514,7 +557,22 @@ Between tool calls, write a single short sentence (≤ 20 words) explaining what
                 named_at_risk_accounts: i.named_at_risk_accounts.map((a) => a.name),
               })),
             };
-            yield { type: "tool_result", tool: block.name, summary };
+            yield {
+              type: "tool_result",
+              tool: block.name,
+              summary,
+              details: {
+                kind: "table",
+                columns: ["Theme", "Customers", "ARR at risk", "% total ARR", "Named accounts"],
+                rows: impact.map((i) => [
+                  i.theme_name,
+                  i.customers_affected,
+                  `$${(i.arr_at_risk / 1000).toFixed(0)}K`,
+                  `${i.arr_at_risk_pct}%`,
+                  i.named_at_risk_accounts.map((a) => a.name).join(", ") || "—",
+                ]),
+              },
+            };
           } else if (block.name === "generate_prioritized_brief") {
             if (!state.themes || !state.impact) {
               throw new Error("generate_prioritized_brief called before themes/impact are ready");
@@ -527,7 +585,17 @@ Between tool calls, write a single short sentence (≤ 20 words) explaining what
               top_theme: brief[0]?.theme_name,
               top_arr_at_risk: brief[0]?.arr_at_risk,
             };
-            yield { type: "tool_result", tool: block.name, summary };
+            yield {
+              type: "tool_result",
+              tool: block.name,
+              summary,
+              details: {
+                kind: "list",
+                items: brief.map(
+                  (b) => `#${b.rank} ${b.theme_name} — $${(b.arr_at_risk / 1000).toFixed(0)}K (${b.arr_at_risk_pct}%) · ${b.severity}`
+                ),
+              },
+            };
             for (const item of brief) {
               yield { type: "theme", data: item };
               await new Promise((r) => setTimeout(r, 250));

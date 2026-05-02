@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import type { BriefItem } from "./agent";
+import type { BriefItem, ToolResultDetail } from "./agent";
 
 export type IdeaLens = "competitor" | "workflow" | "automation" | "agent";
 
@@ -19,7 +19,7 @@ export type IdeaItem = {
 export type IdeaEvent =
   | { type: "trace"; message: string }
   | { type: "tool_call"; tool: string; input: Record<string, unknown> }
-  | { type: "tool_result"; tool: string; summary: string }
+  | { type: "tool_result"; tool: string; summary: string; details?: ToolResultDetail }
   | { type: "idea"; data: IdeaItem }
   | { type: "idea_complete"; total_ideas: number }
   | { type: "error"; message: string };
