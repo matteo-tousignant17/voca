@@ -9,6 +9,7 @@ import FocusPane from "@/components/FocusPane";
 import type { BriefItem, AgentEvent } from "@/lib/agent";
 import type { IdeaItem, IdeaEvent } from "@/lib/ideate";
 import { saveRun } from "@/lib/history";
+import { useAgentMode } from "@/lib/settings";
 
 type AnyEvent = AgentEvent | IdeaEvent;
 
@@ -37,6 +38,7 @@ export default function Home() {
   const [ideas, setIdeas] = useState<IdeaItem[]>([]);
   const [isIdeating, setIsIdeating] = useState(false);
   const [isIdeateComplete, setIsIdeateComplete] = useState(false);
+  const mode = useAgentMode();
   const prefix = useId();
   const abortRef = useRef<AbortController | null>(null);
 
@@ -72,7 +74,7 @@ export default function Home() {
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sources: selectedSources, focus: focusToSend }),
+        body: JSON.stringify({ sources: selectedSources, focus: focusToSend, mode }),
         signal: abortRef.current.signal,
       });
 
@@ -137,7 +139,7 @@ export default function Home() {
     } finally {
       setIsRunning(false);
     }
-  }, [isRunning, selectedSources, selectedFocus, customFocus, addTrace]);
+  }, [isRunning, selectedSources, selectedFocus, customFocus, addTrace, mode]);
 
   const handleIdeate = useCallback(async () => {
     if (isIdeating || !isComplete || themes.length === 0) return;
@@ -211,9 +213,19 @@ export default function Home() {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top bar */}
         <header className="h-14 shrink-0 flex items-center justify-between px-5 border-b border-white/[0.06] bg-[#0c0c0e]/80 backdrop-blur-sm">
-          <div>
-            <h1 className="text-sm font-semibold text-white">Analyze</h1>
-            <p className="text-[11px] text-gray-500 leading-none mt-0.5">Synthesize feedback · prioritize by ARR</p>
+          <div className="flex items-center gap-2.5">
+            <div>
+              <h1 className="text-sm font-semibold text-white">Analyze</h1>
+              <p className="text-[11px] text-gray-500 leading-none mt-0.5">Synthesize feedback · prioritize by ARR</p>
+            </div>
+            {mode === "demo" && (
+              <span
+                className="text-[10px] font-semibold text-emerald-300 bg-emerald-500/[0.08] border border-emerald-500/20 px-2 py-0.5 rounded-md"
+                title="Deterministic playback — change in Settings"
+              >
+                DEMO MODE
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-3">

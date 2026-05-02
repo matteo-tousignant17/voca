@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import type { AgentEvent } from "@/lib/agent";
+import { useEffect, useRef, useState } from "react";
+import { ChevronRight } from "lucide-react";
+import type { AgentEvent, ToolResultDetail } from "@/lib/agent";
 import type { IdeaEvent } from "@/lib/ideate";
 
 type AnyEvent = AgentEvent | IdeaEvent;
@@ -40,9 +41,83 @@ const LENS_COLORS: Record<string, string> = {
   agent:      "text-violet-300",
 };
 
+function DetailBlock({ details }: { details: ToolResultDetail }) {
+  if (details.kind === "kv") {
+    return (
+      <div className="space-y-0.5">
+        {details.rows.map((row, i) => (
+          <div key={i} className="flex justify-between gap-3 text-[11px]">
+            <span className="text-gray-600">{row.label}</span>
+            <span className="text-gray-400 font-mono">{row.value}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  if (details.kind === "list") {
+    return (
+      <ul className="space-y-0.5">
+        {details.items.map((item, i) => (
+          <li key={i} className="text-[11px] text-gray-400 flex gap-1.5">
+            <span className="text-gray-700">·</span>
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+  if (details.kind === "table") {
+    return (
+      <div className="overflow-x-auto">
+        <table className="w-full text-[11px]">
+          <thead>
+            <tr>
+              {details.columns.map((c) => (
+                <th
+                  key={c}
+                  className="text-left text-[10px] font-semibold text-gray-600 uppercase tracking-wider pb-1.5 pr-3"
+                >
+                  {c}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {details.rows.map((row, i) => (
+              <tr key={i} className="border-t border-white/[0.04]">
+                {row.map((cell, j) => (
+                  <td key={j} className="py-1 pr-3 text-gray-400 align-top">
+                    {String(cell)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+  if (details.kind === "quotes") {
+    return (
+      <div className="space-y-1.5">
+        {details.items.map((q, i) => (
+          <div key={i} className="border-l-2 border-violet-500/30 pl-2.5">
+            <p className="text-[11px] italic text-gray-400 leading-relaxed">&ldquo;{q.quote}&rdquo;</p>
+            <p className="text-[10px] text-gray-600 mt-0.5">
+              — {q.source}{q.tier ? `, ${q.tier}` : ""}
+            </p>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return null;
+}
+
 export default function AgentTrace({ entries, isRunning, isIdeating }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const isLive = isRunning || isIdeating;
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -103,10 +178,32 @@ export default function AgentTrace({ entries, isRunning, isIdeating }: Props) {
           }
 
           if (event.type === "tool_result") {
+            const hasDetails = !!event.details;
+            const isOpen = !!expanded[entry.id];
             return (
-              <div key={entry.id} className="flex gap-2 text-emerald-600 pl-4">
-                <span className="shrink-0 select-none">✓</span>
-                <span>{event.summary}</span>
+              <div key={entry.id} className="pl-4">
+                <button
+                  type="button"
+                  disabled={!hasDetails}
+                  onClick={() => hasDetails && setExpanded((p) => ({ ...p, [entry.id]: !p[entry.id] }))}
+                  className={`flex gap-2 text-emerald-600 text-left w-full ${
+                    hasDetails ? "hover:text-emerald-400 cursor-pointer" : "cursor-default"
+                  }`}
+                >
+                  <span className="shrink-0 select-none">✓</span>
+                  {hasDetails && (
+                    <ChevronRight
+                      size={11}
+                      className={`shrink-0 mt-0.5 text-gray-700 transition-transform ${isOpen ? "rotate-90" : ""}`}
+                    />
+                  )}
+                  <span className="leading-snug">{event.summary}</span>
+                </button>
+                {hasDetails && isOpen && event.details && (
+                  <div className="mt-1.5 ml-5 px-3 py-2.5 rounded-md border border-white/[0.05] bg-white/[0.02]">
+                    <DetailBlock details={event.details} />
+                  </div>
+                )}
               </div>
             );
           }
