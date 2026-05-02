@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback, useId } from "react";
-import { Zap } from "lucide-react";
+import { useState, useCallback, useId, useRef } from "react";
+import { Zap, Square } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import AgentTrace from "@/components/AgentTrace";
 import OutputPanel from "@/components/OutputPanel";
@@ -34,6 +34,11 @@ export default function Home() {
   const [isIdeating, setIsIdeating] = useState(false);
   const [isIdeateComplete, setIsIdeateComplete] = useState(false);
   const prefix = useId();
+  const abortRef = useRef<AbortController | null>(null);
+
+  const handleStop = useCallback(() => {
+    abortRef.current?.abort();
+  }, []);
 
   const addTrace = useCallback((event: AnyEvent) => {
     setTraceEntries((prev) => [
@@ -52,12 +57,14 @@ export default function Home() {
     setIsIdeating(false);
     setIsIdeateComplete(false);
     setIsRunning(true);
+    abortRef.current = new AbortController();
 
     try {
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sources: selectedSources }),
+        signal: abortRef.current.signal,
       });
 
       if (!res.body) throw new Error("No response body");
@@ -102,7 +109,11 @@ export default function Home() {
         }
       }
     } catch (err) {
-      addTrace({ type: "error", message: String(err) });
+      if (err instanceof Error && err.name === "AbortError") {
+        addTrace({ type: "trace", message: "— Stopped." });
+      } else {
+        addTrace({ type: "error", message: String(err) });
+      }
     } finally {
       setIsRunning(false);
     }
@@ -113,6 +124,7 @@ export default function Home() {
     setIdeas([]);
     setIsIdeateComplete(false);
     setIsIdeating(true);
+    abortRef.current = new AbortController();
     addTrace({ type: "trace", message: "── Ideation phase ──────────────────" });
 
     try {
@@ -120,6 +132,7 @@ export default function Home() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ themes }),
+        signal: abortRef.current.signal,
       });
 
       if (!res.body) throw new Error("No response body");
@@ -157,14 +170,18 @@ export default function Home() {
         }
       }
     } catch (err) {
-      addTrace({ type: "error", message: String(err) });
+      if (err instanceof Error && err.name === "AbortError") {
+        addTrace({ type: "trace", message: "— Stopped." });
+      } else {
+        addTrace({ type: "error", message: String(err) });
+      }
     } finally {
       setIsIdeating(false);
     }
   }, [isIdeating, isComplete, themes, addTrace]);
 
   const toggleSource = (id: string) => {
-    if (isRunning) return;
+    if (isRunning || isIdeating) return;
     setSelectedSources((prev) =>
       prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
     );
@@ -213,14 +230,18 @@ export default function Home() {
             <div className="w-px h-5 bg-white/[0.08]" />
 
             <button
-              onClick={handleAnalyze}
-              disabled={isRunning || isIdeating || selectedSources.length === 0}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              onClick={isRunning || isIdeating ? handleStop : handleAnalyze}
+              disabled={!isRunning && !isIdeating && selectedSources.length === 0}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-semibold text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                isRunning || isIdeating
+                  ? "bg-red-600/80 hover:bg-red-600"
+                  : "bg-violet-600 hover:bg-violet-500"
+              }`}
             >
-              {isRunning ? (
+              {isRunning || isIdeating ? (
                 <>
-                  <span className="w-2.5 h-2.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                  Running...
+                  <Square size={11} />
+                  Stop
                 </>
               ) : (
                 <>
