@@ -260,9 +260,16 @@ function executeTool(
   return { error: `Unknown tool: ${toolName}` };
 }
 
-export async function* runVoCAgent(sources: string[]): AsyncGenerator<AgentEvent> {
+export async function* runVoCAgent(sources: string[], focus?: string): AsyncGenerator<AgentEvent> {
   yield { type: "trace", message: "Initializing VoC synthesis agent..." };
   yield { type: "trace", message: `Sources queued: ${sources.join(", ")}` };
+  if (focus && focus !== "general") {
+    yield { type: "trace", message: `Focus: ${focus.slice(0, 80)}${focus.length > 80 ? "..." : ""}` };
+  }
+
+  const focusClause = focus && focus !== "general" && focus !== "custom"
+    ? `\n\nFOCUS INSTRUCTION: ${focus}`
+    : "";
 
   const systemPrompt = `You are a Voice of Customer synthesis agent for product managers. Your job is to:
 1. Fetch feedback from all available sources
@@ -291,7 +298,7 @@ Severity levels: critical (churn risk, data loss, security), high (major frictio
 Affected segments must use these exact values: "smb", "mid_market", "enterprise".
 
 Be thorough. Use real quotes from the feedback. Identify 4-6 distinct themes.
-After synthesize_themes, call calculate_reach_impact, then generate_prioritized_brief.`;
+After synthesize_themes, call calculate_reach_impact, then generate_prioritized_brief.${focusClause}`;
 
   const messages: Anthropic.MessageParam[] = [
     {

@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useCallback, useId, useRef } from "react";
-import { Zap, Square } from "lucide-react";
+import { Square } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import AgentTrace from "@/components/AgentTrace";
 import OutputPanel from "@/components/OutputPanel";
+import FocusPane from "@/components/FocusPane";
 import type { BriefItem, AgentEvent } from "@/lib/agent";
 import type { IdeaItem, IdeaEvent } from "@/lib/ideate";
+import { saveRun } from "@/lib/history";
 
 type AnyEvent = AgentEvent | IdeaEvent;
 
@@ -25,6 +27,8 @@ const SOURCES = [
 
 export default function Home() {
   const [selectedSources, setSelectedSources] = useState<string[]>(["reddit", "g2", "gong", "support_tickets"]);
+  const [selectedFocus, setSelectedFocus] = useState("general");
+  const [customFocus, setCustomFocus] = useState("");
   const [traceEntries, setTraceEntries] = useState<TraceEntry[]>([]);
   const [themes, setThemes] = useState<BriefItem[]>([]);
   const [isRunning, setIsRunning] = useState(false);
@@ -35,6 +39,9 @@ export default function Home() {
   const [isIdeateComplete, setIsIdeateComplete] = useState(false);
   const prefix = useId();
   const abortRef = useRef<AbortController | null>(null);
+
+  // Left panel shows FocusPane when idle, AgentTrace when active
+  const showTrace = isRunning || isIdeating || traceEntries.length > 0;
 
   const handleStop = useCallback(() => {
     abortRef.current?.abort();
@@ -59,11 +66,13 @@ export default function Home() {
     setIsRunning(true);
     abortRef.current = new AbortController();
 
+    const focusToSend = selectedFocus === "custom" ? customFocus : selectedFocus;
+
     try {
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sources: selectedSources }),
+        body: JSON.stringify({ sources: selectedSources, focus: focusToSend }),
         signal: abortRef.current.signal,
       });
 
@@ -72,6 +81,7 @@ export default function Home() {
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
+      let latestThemes: BriefItem[] = [];
 
       while (true) {
         const { done, value } = await reader.read();
@@ -95,13 +105,23 @@ export default function Home() {
                 const exists = prev.some((t) => t.theme_name === event.data.theme_name);
                 if (exists) return prev;
                 const updated = [...prev, event.data];
-                return updated.sort((a, b) => b.arr_at_risk - a.arr_at_risk).map((t, i) => ({ ...t, rank: i + 1 }));
+                const sorted = updated.sort((a, b) => b.arr_at_risk - a.arr_at_risk).map((t, i) => ({ ...t, rank: i + 1 }));
+                latestThemes = sorted;
+                return sorted;
               });
             }
 
             if (event.type === "complete") {
               setIsComplete(true);
               setSummary({ total_themes: event.total_themes, total_arr_at_risk: event.total_arr_at_risk, total_customers: event.total_customers });
+              saveRun({
+                timestamp: Date.now(),
+                sources: selectedSources,
+                focus: focusToSend,
+                theme_count: event.total_themes,
+                arr_at_risk: event.total_arr_at_risk,
+                top_theme: latestThemes[0]?.theme_name ?? "",
+              });
             }
           } catch {
             // skip malformed lines
@@ -117,7 +137,7 @@ export default function Home() {
     } finally {
       setIsRunning(false);
     }
-  }, [isRunning, selectedSources, addTrace]);
+  }, [isRunning, selectedSources, selectedFocus, customFocus, addTrace]);
 
   const handleIdeate = useCallback(async () => {
     if (isIdeating || !isComplete || themes.length === 0) return;
@@ -157,13 +177,8 @@ export default function Home() {
           try {
             const event = JSON.parse(payload) as IdeaEvent;
             addTrace(event);
-
-            if (event.type === "idea") {
-              setIdeas((prev) => [...prev, event.data]);
-            }
-            if (event.type === "idea_complete") {
-              setIsIdeateComplete(true);
-            }
+            if (event.type === "idea") setIdeas((prev) => [...prev, event.data]);
+            if (event.type === "idea_complete") setIsIdeateComplete(true);
           } catch {
             // skip malformed lines
           }
@@ -209,7 +224,7 @@ export default function Home() {
                   <button
                     key={src.id}
                     onClick={() => toggleSource(src.id)}
-                    disabled={isRunning}
+                    disabled={isRunning || isIdeating}
                     className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium border transition-all disabled:cursor-not-allowed ${
                       active
                         ? "bg-white/[0.07] border-white/[0.12] text-gray-200"
@@ -229,35 +244,36 @@ export default function Home() {
             <span className="text-xs text-gray-600">{totalItems} items</span>
             <div className="w-px h-5 bg-white/[0.08]" />
 
-            <button
-              onClick={isRunning || isIdeating ? handleStop : handleAnalyze}
-              disabled={!isRunning && !isIdeating && selectedSources.length === 0}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-semibold text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-                isRunning || isIdeating
-                  ? "bg-red-600/80 hover:bg-red-600"
-                  : "bg-violet-600 hover:bg-violet-500"
-              }`}
-            >
-              {isRunning || isIdeating ? (
-                <>
-                  <Square size={11} />
-                  Stop
-                </>
-              ) : (
-                <>
-                  <Zap size={12} />
-                  Run Agent
-                </>
-              )}
-            </button>
+            {(isRunning || isIdeating) && (
+              <button
+                onClick={handleStop}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-semibold bg-red-600/80 hover:bg-red-600 text-white transition-colors"
+              >
+                <Square size={11} />
+                Stop
+              </button>
+            )}
           </div>
         </header>
 
         {/* Split view */}
         <div className="flex-1 grid grid-cols-2 gap-0 min-h-0 overflow-hidden">
+          {/* Left: FocusPane (idle) or AgentTrace (active) */}
           <div className="flex flex-col min-h-0 border-r border-white/[0.06]">
-            <AgentTrace entries={traceEntries} isRunning={isRunning} isIdeating={isIdeating} />
+            {showTrace ? (
+              <AgentTrace entries={traceEntries} isRunning={isRunning} isIdeating={isIdeating} />
+            ) : (
+              <FocusPane
+                selectedFocus={selectedFocus}
+                customFocus={customFocus}
+                onSelectFocus={setSelectedFocus}
+                onCustomFocus={setCustomFocus}
+                onRun={handleAnalyze}
+                disabled={selectedSources.length === 0}
+              />
+            )}
           </div>
+          {/* Right: output */}
           <div className="flex flex-col min-h-0">
             <OutputPanel
               themes={themes}

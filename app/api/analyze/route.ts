@@ -7,13 +7,14 @@ export const maxDuration = 60;
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const sources: string[] = body.sources ?? ["reddit", "g2", "gong", "support_tickets"];
+  const focus: string = body.focus ?? "general";
 
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        for await (const event of runVoCAgent(sources)) {
+        for await (const event of runVoCAgent(sources, focus)) {
           const data = `data: ${JSON.stringify(event)}\n\n`;
           controller.enqueue(encoder.encode(data));
         }
