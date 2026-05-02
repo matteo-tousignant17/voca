@@ -20,6 +20,8 @@ type Props = {
   onFollowUp?: (text: string) => void;
   showDetailToggle?: boolean;
   onSwitchToDetail?: () => void;
+  /** Hide live-engine chrome (orchestrator · tools) during deterministic demo playback */
+  isDemo?: boolean;
 };
 
 const TOOL_META: Record<string, { label: string; color: string; dot: string }> = {
@@ -293,7 +295,15 @@ function buildView(entries: TraceEntry[]): RenderedEntry[] {
   return out;
 }
 
-export default function AgentTrace({ entries, isRunning, isIdeating, onFollowUp, showDetailToggle, onSwitchToDetail }: Props) {
+export default function AgentTrace({
+  entries,
+  isRunning,
+  isIdeating,
+  onFollowUp,
+  showDetailToggle,
+  onSwitchToDetail,
+  isDemo,
+}: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const isLive = isRunning || isIdeating;
@@ -380,17 +390,19 @@ export default function AgentTrace({ entries, isRunning, isIdeating, onFollowUp,
               </button>
             </div>
           )}
-          <span className="hidden sm:flex items-center gap-1 text-[10px] text-gray-700 font-mono">
-            <span className="flex items-center gap-1">
-              <Brain size={10} className="text-violet-400/70" />
-              orchestrator
+          {!isDemo && (
+            <span className="hidden sm:flex items-center gap-1 text-[10px] text-gray-700 font-mono">
+              <span className="flex items-center gap-1">
+                <Brain size={10} className="text-violet-400/70" />
+                orchestrator
+              </span>
+              <span className="text-gray-800">·</span>
+              <span className="flex items-center gap-1">
+                <Cpu size={10} className="text-sky-400/70" />
+                tools
+              </span>
             </span>
-            <span className="text-gray-800">·</span>
-            <span className="flex items-center gap-1">
-              <Cpu size={10} className="text-sky-400/70" />
-              tools
-            </span>
-          </span>
+          )}
           <span className="text-[10px] text-gray-700 font-mono">claude-sonnet-4-6</span>
         </div>
       </div>

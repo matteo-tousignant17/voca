@@ -381,6 +381,7 @@ export default function Home() {
         onSwitchToDetail={
           activeDetailTheme ? () => setMiddlePanelMode("detail") : undefined
         }
+        isDemo={mode === "demo"}
       />
     );
   }
