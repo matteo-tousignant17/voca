@@ -15,6 +15,10 @@ function formatARR(n: number): string {
   return `$${n}`;
 }
 
+function stripSourceTags(source: string): string {
+  return source.replace(/\s*\([^)]*\)/g, "").trim();
+}
+
 export default function ThemeCard({ item, animationDelay = 0 }: { item: BriefItem; animationDelay?: number }) {
   const s = SEVERITY[item.severity] ?? SEVERITY.medium;
 
@@ -23,7 +27,7 @@ export default function ThemeCard({ item, animationDelay = 0 }: { item: BriefIte
       className="rounded-lg border border-white/[0.07] bg-[#111113] p-4 animate-fade-in"
       style={{ animationDelay: `${animationDelay}ms` }}
     >
-      {/* Header */}
+      {/* Title + severity */}
       <div className="flex items-center justify-between gap-3 mb-2.5">
         <div className="flex items-center gap-2 min-w-0">
           <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${s.dot}`} />
@@ -35,41 +39,30 @@ export default function ThemeCard({ item, animationDelay = 0 }: { item: BriefIte
         </span>
       </div>
 
-      {/* Problem statement */}
+      {/* Summary sentence */}
       <p className="text-gray-500 text-xs leading-relaxed mb-3">{item.problem_statement}</p>
 
-      {/* Metrics row */}
-      <div className="grid grid-cols-3 gap-2 mb-3">
-        {[
-          { value: formatARR(item.arr_at_risk), label: "ARR at risk" },
-          { value: item.customers_affected.toLocaleString(), label: "Customers" },
-          { value: `${item.arr_at_risk_pct}%`, label: "of total ARR" },
-        ].map((m) => (
-          <div key={m.label} className="bg-white/[0.03] border border-white/[0.05] rounded-md p-2.5 text-center">
-            <div className="text-white font-semibold text-sm">{m.value}</div>
-            <div className="text-gray-600 text-[10px] mt-0.5">{m.label}</div>
-          </div>
-        ))}
+      {/* Suggested action */}
+      <div className="flex items-start gap-2 bg-emerald-500/[0.05] border border-emerald-500/[0.12] rounded-md px-3 py-2 mb-3">
+        <span className="text-emerald-500 text-xs shrink-0 mt-0.5">→</span>
+        <p className="text-emerald-400 text-[11px] leading-relaxed">{item.suggested_action}</p>
       </div>
 
-      {/* Evidence */}
-      {item.evidence?.length > 0 && (
-        <div className="mb-3">
-          <div className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider mb-1.5">Evidence</div>
-          <div className="space-y-1.5">
-            {item.evidence.slice(0, 2).map((ev, i) => (
-              <div key={i} className="bg-white/[0.02] border border-white/[0.05] rounded-md px-3 py-2">
-                <p className="text-gray-400 text-[11px] italic leading-relaxed">
-                  &ldquo;{ev.quote.slice(0, 160)}{ev.quote.length > 160 ? "…" : ""}&rdquo;
-                </p>
-                <p className="text-gray-700 text-[10px] mt-1">
-                  — {ev.source}{ev.company_size ? `, ${ev.company_size}` : ""}
-                </p>
-              </div>
-            ))}
-          </div>
+      {/* Stats — ARR hero + supporting */}
+      <div className="flex gap-2 mb-3">
+        <div className="bg-white/[0.03] border border-white/[0.05] rounded-md p-3 flex-[2] text-center">
+          <div className="text-white font-semibold text-base">{formatARR(item.arr_at_risk)}</div>
+          <div className="text-gray-600 text-[10px] mt-0.5">ARR at risk</div>
         </div>
-      )}
+        <div className="bg-white/[0.03] border border-white/[0.05] rounded-md p-2.5 flex-1 text-center">
+          <div className="text-white font-semibold text-sm">{item.customers_affected.toLocaleString()}</div>
+          <div className="text-gray-600 text-[10px] mt-0.5">Customers</div>
+        </div>
+        <div className="bg-white/[0.03] border border-white/[0.05] rounded-md p-2.5 flex-1 text-center">
+          <div className="text-white font-semibold text-sm">{item.arr_at_risk_pct}%</div>
+          <div className="text-gray-600 text-[10px] mt-0.5">of total ARR</div>
+        </div>
+      </div>
 
       {/* Named at-risk accounts */}
       {item.named_at_risk_accounts?.length > 0 && (
@@ -91,27 +84,40 @@ export default function ThemeCard({ item, animationDelay = 0 }: { item: BriefIte
         </div>
       )}
 
-      {/* Tradeoff chips */}
-      <div className="flex gap-1.5 flex-wrap mb-3">
-        {[item.tradeoffs.effort, item.tradeoffs.impact, item.tradeoffs.segment_skew].map((t) => (
-          <span key={t} className="text-[10px] text-gray-600 bg-white/[0.03] border border-white/[0.05] px-2 py-0.5 rounded-md">
-            {t}
-          </span>
-        ))}
-        {item.churn_signal && (
-          <span
-            className="text-[10px] text-amber-300 bg-amber-500/[0.07] border border-amber-500/20 px-2 py-0.5 rounded-md"
-            title="Churn signal from CRM"
-          >
-            {item.churn_signal}
-          </span>
-        )}
-      </div>
+      {/* Evidence */}
+      {item.evidence?.length > 0 && (
+        <div className="mb-3">
+          <div className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider mb-1.5">What customers said</div>
+          <div className="space-y-1.5">
+            {item.evidence.slice(0, 2).map((ev, i) => (
+              <div key={i} className="bg-white/[0.02] border border-white/[0.05] rounded-md px-3 py-2">
+                <p className="text-gray-400 text-[11px] italic leading-relaxed">
+                  &ldquo;{ev.quote.slice(0, 160)}{ev.quote.length > 160 ? "…" : ""}&rdquo;
+                </p>
+                <p className="text-gray-700 text-[10px] mt-1">
+                  — {stripSourceTags(ev.source)}{ev.company_size ? `, ${ev.company_size}` : ""}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
-      {/* Suggested action */}
-      <div className="flex items-start gap-2 bg-emerald-500/[0.05] border border-emerald-500/[0.12] rounded-md px-3 py-2">
-        <span className="text-emerald-500 text-xs shrink-0 mt-0.5">→</span>
-        <p className="text-emerald-400 text-[11px] leading-relaxed">{item.suggested_action}</p>
+      {/* Tradeoff chips + churn signal */}
+      <div className="space-y-1.5">
+        <div className="flex gap-1.5 flex-wrap">
+          {[item.tradeoffs.effort, item.tradeoffs.impact, item.tradeoffs.segment_skew].map((t) => (
+            <span key={t} className="text-[10px] text-gray-600 bg-white/[0.03] border border-white/[0.05] px-2 py-0.5 rounded-md">
+              {t}
+            </span>
+          ))}
+        </div>
+        {item.churn_signal && (
+          <div className="flex items-start gap-1.5">
+            <span className="text-[10px] font-semibold text-amber-500/70 shrink-0 mt-px">Churn signal:</span>
+            <span className="text-[10px] text-amber-300/80 leading-relaxed">{item.churn_signal}</span>
+          </div>
+        )}
       </div>
     </div>
   );
