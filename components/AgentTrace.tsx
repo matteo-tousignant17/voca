@@ -403,7 +403,9 @@ export default function AgentTrace({
               </span>
             </span>
           )}
-          <span className="text-[10px] text-gray-700 font-mono">claude-sonnet-4-6</span>
+          {!isDemo && (
+            <span className="text-[10px] text-gray-700 font-mono">claude-sonnet-4-6</span>
+          )}
         </div>
       </div>
 
