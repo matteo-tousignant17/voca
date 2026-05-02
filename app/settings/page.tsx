@@ -16,13 +16,6 @@ export default function SettingsPage() {
       <Sidebar />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="h-14 shrink-0 flex items-center justify-between px-5 border-b border-white/[0.06] bg-[#0c0c0e]/80 backdrop-blur-sm">
-          <div>
-            <h1 className="text-sm font-semibold text-white">Settings</h1>
-            <p className="text-[11px] text-gray-500 leading-none mt-0.5">Configure how the agent runs</p>
-          </div>
-        </header>
-
         <div className="flex-1 overflow-y-auto min-h-0 px-8 py-8 max-w-3xl w-full">
           <section>
             <div className="flex items-center justify-between mb-4">
