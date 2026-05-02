@@ -6,6 +6,7 @@ import AgentTrace from "@/components/AgentTrace";
 import OutputPanel from "@/components/OutputPanel";
 import FocusPane from "@/components/FocusPane";
 import { useHistory } from "@/context/HistoryContext";
+import { useAgentMode } from "@/lib/settings";
 import type { BriefItem, AgentEvent } from "@/lib/agent";
 import type { IdeaItem, IdeaEvent } from "@/lib/ideate";
 
@@ -35,6 +36,7 @@ export default function Home() {
   const themesRef = useRef<BriefItem[]>([]);
 
   const { addToHistory } = useHistory();
+  const mode = useAgentMode();
 
   // Left panel shows FocusPane when idle, AgentTrace when active
   const showTrace = isRunning || isIdeating || traceEntries.length > 0;
@@ -70,7 +72,7 @@ export default function Home() {
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sources: selectedSources, focus: focusToSend }),
+        body: JSON.stringify({ sources: selectedSources, focus: focusToSend, mode }),
         signal: abortRef.current.signal,
       });
 
@@ -141,7 +143,7 @@ export default function Home() {
     } finally {
       setIsRunning(false);
     }
-  }, [isRunning, selectedSources, selectedFocus, customFocus, addTrace, addToHistory]);
+  }, [isRunning, selectedSources, selectedFocus, customFocus, addTrace, addToHistory, mode]);
 
   const handleIdeate = useCallback(async () => {
     if (isIdeating || !isComplete || themes.length === 0) return;
@@ -208,6 +210,12 @@ export default function Home() {
         <div className="flex-1 grid grid-cols-[35fr_65fr] gap-0 min-h-0 overflow-hidden">
           {/* Left: FocusPane (idle) or AgentTrace (active) */}
           <div className="flex flex-col min-h-0 border-r border-white/[0.06]">
+            {mode === "demo" && (
+              <div className="flex items-center justify-between px-4 py-1.5 border-b border-emerald-500/20 bg-emerald-500/[0.05] shrink-0">
+                <span className="text-[10px] font-semibold text-emerald-400 tracking-wide">DEMO MODE</span>
+                <a href="/settings" className="text-[10px] text-emerald-600 hover:text-emerald-400 transition-colors">change →</a>
+              </div>
+            )}
             {showTrace ? (
               <AgentTrace entries={traceEntries} isRunning={isRunning} isIdeating={isIdeating} onStop={handleStop} />
             ) : (

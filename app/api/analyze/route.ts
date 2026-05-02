@@ -1,20 +1,33 @@
 import { NextRequest } from "next/server";
 import { runVoCAgent } from "@/lib/agent";
+import { runDemoAgent } from "@/lib/demo_agent";
+import { DEMO_SOURCES } from "@/lib/demo_sources";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
+const DEMO_DEFAULT_SOURCES = DEMO_SOURCES.map((s) => s.id);
+const LIVE_DEFAULT_SOURCES = ["reddit", "g2", "gong", "support_tickets"];
+
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const sources: string[] = body.sources ?? ["reddit", "g2", "gong", "support_tickets"];
   const focus: string = body.focus ?? "general";
+  const mode: "live" | "demo" = body.mode === "live" ? "live" : "demo";
+
+  const requested = Array.isArray(body.sources) ? (body.sources as string[]) : null;
+  const sources = mode === "demo"
+    ? (requested && requested.some((s) => DEMO_DEFAULT_SOURCES.includes(s))
+        ? requested.filter((s) => DEMO_DEFAULT_SOURCES.includes(s))
+        : DEMO_DEFAULT_SOURCES)
+    : (requested ?? LIVE_DEFAULT_SOURCES);
 
   const encoder = new TextEncoder();
+  const generator = mode === "demo" ? runDemoAgent(sources, focus) : runVoCAgent(sources, focus);
 
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        for await (const event of runVoCAgent(sources, focus)) {
+        for await (const event of generator) {
           const data = `data: ${JSON.stringify(event)}\n\n`;
           controller.enqueue(encoder.encode(data));
         }

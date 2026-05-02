@@ -16,7 +16,7 @@ const NAV_ITEMS = [
   },
   { id: "sources",  label: "Sources",  icon: Database,  href: "/sources" },
   { id: "reports",  label: "Reports",  icon: FileText,   href: "/reports" },
-  { id: "settings", label: "Settings", icon: Settings,   href: "/settings", soon: true },
+  { id: "settings", label: "Settings", icon: Settings,   href: "/settings" },
 ];
 
 export default function Sidebar() {
