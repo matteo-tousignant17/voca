@@ -7,7 +7,16 @@ import { Fragment } from "react";
 import { useHistory } from "@/context/HistoryContext";
 import { formatRelativeTime, formatARR } from "@/lib/history";
 
-const NAV_ITEMS = [
+type NavItem = {
+  id: string;
+  label: string;
+  icon: typeof BarChart2;
+  href: string;
+  soon?: boolean;
+  children?: { id: string; label: string; icon: typeof BarChart2; href: string }[];
+};
+
+const NAV_ITEMS: NavItem[] = [
   {
     id: "analyze", label: "Analyze", icon: BarChart2, href: "/",
     children: [
