@@ -577,7 +577,8 @@ export default function AgentTrace({ entries, isRunning, isIdeating, onFollowUp,
 
           if (node.kind === "idea_complete") {
             const hasDetails = (node.ideas_detail?.length ?? 0) > 0;
-            const isOpen = !!expanded[node.id];
+            // Expanded by default; user may collapse via the toggle
+            const isOpen = hasDetails && (expanded[node.id] ?? true);
             return (
               <div key={node.id} className="mt-3 pt-3 border-t border-white/[0.06] px-2">
                 <div className="text-indigo-400 font-semibold">◈ Ideation complete</div>
@@ -590,7 +591,12 @@ export default function AgentTrace({ entries, isRunning, isIdeating, onFollowUp,
                 {hasDetails && (
                   <button
                     type="button"
-                    onClick={() => setExpanded((p) => ({ ...p, [node.id]: !p[node.id] }))}
+                    onClick={() =>
+                      setExpanded((p) => ({
+                        ...p,
+                        [node.id]: !(p[node.id] ?? true),
+                      }))
+                    }
                     className="flex items-center gap-1.5 mt-2 text-left text-[10px] font-semibold text-gray-500 hover:text-gray-300 transition-colors"
                   >
                     <ChevronRight
