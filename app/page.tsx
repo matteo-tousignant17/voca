@@ -233,8 +233,8 @@ export default function Home() {
           </div>
         </header>
 
-        {/* Split view */}
-        <div className="flex-1 grid grid-cols-2 gap-0 min-h-0 overflow-hidden">
+        {/* Split view — trace:output 35:65 */}
+        <div className="flex-1 grid grid-cols-[35fr_65fr] gap-0 min-h-0 overflow-hidden">
           <div className="flex flex-col min-h-0 border-r border-white/[0.06]">
             <AgentTrace entries={traceEntries} isRunning={isRunning} isIdeating={isIdeating} />
           </div>
