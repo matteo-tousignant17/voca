@@ -1,37 +1,85 @@
 {
   "company": "Notion",
-  "total_customers": 750,
-  "total_arr": 8000000,
+  "total_customers": 1200,
+  "total_arr": 14400000,
+  "as_of": "2024-11-22",
   "segments": {
     "smb": {
       "label": "SMB",
       "description": "1-50 employees",
-      "customers": 500,
-      "avg_arr": 2000,
-      "total_arr": 1000000,
-      "churn_rate_annual": 0.18,
+      "customers": 800,
+      "avg_arr": 2500,
+      "total_arr": 2000000,
+      "churn_rate_annual": 0.21,
       "expansion_potential": "low",
-      "color": "#60a5fa"
+      "color": "#60a5fa",
+      "nps_current": -4,
+      "nps_trend_6mo": -7,
+      "recent_churned_arr_90d": 184000,
+      "industry_breakdown": [
+        { "industry": "Creative & Marketing Agencies", "pct": 28 },
+        { "industry": "Professional Services & Consulting", "pct": 22 },
+        { "industry": "Software / Indie SaaS", "pct": 19 },
+        { "industry": "Other", "pct": 31 }
+      ],
+      "top_at_risk_accounts": [
+        { "name": "Atlas Architecture", "arr": 9600, "risk_reason": "Lapsed to Obsidian over offline mode and guest pricing; win-back conversation in progress" },
+        { "name": "Meadowlark Creative", "arr": 7800, "risk_reason": "Repeat billing surprises, requested cancel-pending" },
+        { "name": "Headland Studio", "arr": 6000, "risk_reason": "Mobile performance blocking client-on-site use" }
+      ]
     },
     "mid_market": {
       "label": "Mid-Market",
       "description": "51-500 employees",
-      "customers": 200,
-      "avg_arr": 15000,
-      "total_arr": 3000000,
-      "churn_rate_annual": 0.12,
+      "customers": 320,
+      "avg_arr": 20000,
+      "total_arr": 6400000,
+      "churn_rate_annual": 0.14,
       "expansion_potential": "high",
-      "color": "#a78bfa"
+      "color": "#a78bfa",
+      "nps_current": 8,
+      "nps_trend_6mo": -3,
+      "recent_churned_arr_90d": 286000,
+      "industry_breakdown": [
+        { "industry": "B2B SaaS", "pct": 34 },
+        { "industry": "Education & EdTech", "pct": 18 },
+        { "industry": "Healthcare & Health Services", "pct": 14 },
+        { "industry": "Other", "pct": 34 }
+      ],
+      "top_at_risk_accounts": [
+        { "name": "Velocity Agency", "arr": 18000, "risk_reason": "Real-time data loss incident + 20% pricing increase, leadership-level churn risk" },
+        { "name": "Cobalt Studios", "arr": 22500, "risk_reason": "Mobile UX and AI add-on quality, ~95% likely to churn at renewal" },
+        { "name": "Crestline Partners", "arr": 31000, "risk_reason": "12-day P1 on Salesforce sync, support escalation in flight" },
+        { "name": "Bramble Health", "arr": 36000, "risk_reason": "AI add-on cancel intent at renewal; Glean evaluation underway" },
+        { "name": "Pinecrest Schools", "arr": 27000, "risk_reason": "Adoption stalled at 60% over search and permissions confusion" }
+      ]
     },
     "enterprise": {
       "label": "Enterprise",
       "description": "500+ employees",
-      "customers": 50,
-      "avg_arr": 80000,
-      "total_arr": 4000000,
-      "churn_rate_annual": 0.07,
+      "customers": 80,
+      "avg_arr": 75000,
+      "total_arr": 6000000,
+      "churn_rate_annual": 0.09,
       "expansion_potential": "very_high",
-      "color": "#34d399"
+      "color": "#34d399",
+      "nps_current": 14,
+      "nps_trend_6mo": -5,
+      "recent_churned_arr_90d": 412000,
+      "industry_breakdown": [
+        { "industry": "Financial Services & Fintech", "pct": 26 },
+        { "industry": "Technology & Robotics", "pct": 24 },
+        { "industry": "Healthcare & Life Sciences", "pct": 18 },
+        { "industry": "Other (Legal, Government, Logistics)", "pct": 32 }
+      ],
+      "top_at_risk_accounts": [
+        { "name": "Lattice Robotics", "arr": 320000, "risk_reason": "Largest account; foundational issues (data loss, search, AI context) raised at executive level" },
+        { "name": "Helix Biosciences", "arr": 168000, "risk_reason": "SOC2 audit log gap + EU data residency, 60-day renewal window" },
+        { "name": "NovaSoft Technologies", "arr": 144000, "risk_reason": "API performance and search blocking internal tooling expansion" },
+        { "name": "Heritage Wealth", "arr": 112000, "risk_reason": "300-seat expansion blocked by audit log immutability and data residency" },
+        { "name": "Meridian Capital Group", "arr": 96000, "risk_reason": "SSO reliability and audit log; multi-year deal contingent on fixes" },
+        { "name": "Northwind Logistics", "arr": 88000, "risk_reason": "200-seat field expansion blocked by lack of offline mode and API rate limits" }
+      ]
     }
   }
 }

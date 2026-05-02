@@ -37,7 +37,7 @@ export default function Sidebar() {
           </div>
           <div className="min-w-0 text-left">
             <div className="text-xs font-medium text-gray-200 truncate">Notion</div>
-            <div className="text-[10px] text-gray-500 truncate">$8M ARR · 750 customers</div>
+            <div className="text-[10px] text-gray-500 truncate">$14.4M ARR · 1,200 customers</div>
           </div>
         </div>
       </div>

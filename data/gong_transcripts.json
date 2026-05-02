@@ -109,5 +109,265 @@
         "quote": "Search is the other one. We're three years in, we have thousands of docs. Finding things is genuinely hard. My suggestion would be full-text search across all content types, including inside table cells. Right now search just doesn't work for a company our size with our content volume."
       }
     ]
+  },
+  {
+    "id": "gong5",
+    "source": "gong",
+    "call_type": "renewal_risk",
+    "account_name": "Helix Biosciences",
+    "account_tier": "enterprise",
+    "arr": 168000,
+    "csm": "Sarah Chen",
+    "date": "2024-11-19",
+    "duration_minutes": 44,
+    "sentiment": "negative",
+    "excerpts": [
+      {
+        "speaker": "customer",
+        "timestamp": "5:30",
+        "quote": "Our SOC2 auditor flagged the audit log as insufficient. They specifically called out that page moves, property changes, and bulk edits aren't fully attributed in the export. We have 90 days to remediate. If Notion doesn't have a path on this, we have to put a different tool in the audit scope, and that tool will probably also become our primary."
+      },
+      {
+        "speaker": "customer",
+        "timestamp": "19:15",
+        "quote": "The other concern is data residency. We have customers in the EU asking about where their information lives. Notion's answer of 'multi-region storage' isn't precise enough for procurement. Our competitors offer EU-only data residency. This is becoming a sales blocker for us, which weirdly puts pressure on our Notion contract."
+      },
+      {
+        "speaker": "customer",
+        "timestamp": "33:40",
+        "quote": "I'm telling you all this because we like Notion and we don't want to switch. But our renewal is in 60 days and we need at minimum a credible commitment on enterprise audit logging and data residency. Otherwise we have to start a procurement process for an alternative."
+      }
+    ]
+  },
+  {
+    "id": "gong6",
+    "source": "gong",
+    "call_type": "churn_save",
+    "account_name": "Cobalt Studios",
+    "account_tier": "mid_market",
+    "arr": 22500,
+    "csm": "Marcus Webb",
+    "date": "2024-11-11",
+    "duration_minutes": 38,
+    "sentiment": "very_negative",
+    "excerpts": [
+      {
+        "speaker": "customer",
+        "timestamp": "2:50",
+        "quote": "I'm going to be direct with you — we're 95% sure we're leaving at renewal. The mobile experience killed it for us. Half my team is on the road for client meetings and they cannot function with the current iOS app. They've started using Apple Notes and emailing themselves things, which is exactly what Notion was supposed to fix."
+      },
+      {
+        "speaker": "customer",
+        "timestamp": "16:00",
+        "quote": "And the AI add-on. We turned it on, paid for a quarter, and the team unanimously asked us to turn it off. It can't see our actual content. So we're paying $10 a seat for ChatGPT with a Notion logo. Coda's AI literally answers 'what's our policy on X' from our actual handbook. That's the bar now."
+      }
+    ]
+  },
+  {
+    "id": "gong7",
+    "source": "gong",
+    "call_type": "expansion_blocked",
+    "account_name": "Northwind Logistics",
+    "account_tier": "enterprise",
+    "arr": 88000,
+    "csm": "Priya Nair",
+    "date": "2024-10-31",
+    "duration_minutes": 41,
+    "sentiment": "mixed",
+    "excerpts": [
+      {
+        "speaker": "customer",
+        "timestamp": "7:20",
+        "quote": "We have approval to expand by 200 seats across our warehouse and dispatch teams. But those teams have terrible connectivity in the field. Without offline mode this is a non-starter. Last quarter we even piloted with 30 of them and it was so frustrating they asked to go back to clipboards. Literal clipboards."
+      },
+      {
+        "speaker": "customer",
+        "timestamp": "25:10",
+        "quote": "The other expansion blocker is the API rate limits. We want to integrate Notion into our dispatch system as the workflow UI. The dispatcher updates a row, the system reacts. But at our throughput we'd hit rate limits in the first hour of every shift. Without an enterprise API tier we can't put Notion in any operational workflow."
+      }
+    ]
+  },
+  {
+    "id": "gong8",
+    "source": "gong",
+    "call_type": "prospect_eval",
+    "account_name": "Quanta Diagnostics",
+    "account_tier": "enterprise",
+    "arr": 0,
+    "csm": "Aaron Liu",
+    "date": "2024-10-22",
+    "duration_minutes": 55,
+    "sentiment": "neutral",
+    "excerpts": [
+      {
+        "speaker": "customer",
+        "timestamp": "10:05",
+        "quote": "We're evaluating Notion against Confluence Enterprise. The user experience advantage is obvious — our team prefers Notion in trials. But our security team has hard requirements: SCIM v2 with deprovisioning hooks, customer-managed encryption keys, granular audit log with export, and field-level access controls. Where does Notion stand on those today?"
+      },
+      {
+        "speaker": "customer",
+        "timestamp": "32:40",
+        "quote": "Honest reaction: we hear 'on the roadmap' a lot. For a 600-seat purchase we need more concrete commitments. Our procurement requires SLAs in writing for SSO uptime and audit log completeness. Can you put us in touch with someone who can negotiate those terms?"
+      }
+    ]
+  },
+  {
+    "id": "gong9",
+    "source": "gong",
+    "call_type": "executive_sync",
+    "account_name": "Lattice Robotics",
+    "account_tier": "enterprise",
+    "arr": 320000,
+    "csm": "David Park",
+    "date": "2024-11-05",
+    "duration_minutes": 62,
+    "sentiment": "mixed",
+    "excerpts": [
+      {
+        "speaker": "customer",
+        "timestamp": "8:15",
+        "quote": "We are your largest enterprise account in robotics. We have 1,400 seats. Our top three asks have been the same for 18 months: real-time collaboration without data loss, full-text search that actually works, and a workspace-aware AI. None of these have shipped meaningful improvements. I want to understand the prioritization."
+      },
+      {
+        "speaker": "customer",
+        "timestamp": "28:45",
+        "quote": "We had two data loss incidents in October alone. One affected our incident response runbooks. The fact that our IR runbooks could be silently lost during an editing conflict — I cannot keep them in Notion if that's the reality. We're piloting Confluence for runbooks just for this reason."
+      },
+      {
+        "speaker": "customer",
+        "timestamp": "47:20",
+        "quote": "I'll be candid: at my next board meeting I have to explain why we spend $320K a year on Notion. The answer needs to be more compelling than 'the team likes the UI'. I need to see roadmap commitments on the foundational issues, or we'll have to consolidate to a competitor."
+      }
+    ]
+  },
+  {
+    "id": "gong10",
+    "source": "gong",
+    "call_type": "support_escalation",
+    "account_name": "Crestline Partners",
+    "account_tier": "mid_market",
+    "arr": 31000,
+    "csm": "Marcus Webb",
+    "date": "2024-11-13",
+    "duration_minutes": 28,
+    "sentiment": "very_negative",
+    "excerpts": [
+      {
+        "speaker": "customer",
+        "timestamp": "1:40",
+        "quote": "I've had a P1 ticket open for 12 days about our Salesforce sync breaking. We're getting a single email per day saying 'engineering is investigating'. Meanwhile our 35-person sales team has stale data in Notion and is making decisions on bad info. This level of support response for an enterprise integration is not acceptable."
+      },
+      {
+        "speaker": "customer",
+        "timestamp": "14:50",
+        "quote": "What I need from you today is one of three things: a real ETA, a workaround we can deploy this week, or a credit on next year's renewal. 'We'll keep you posted' is what I've gotten for 12 days. If this is what enterprise support looks like, I need to reconsider whether Notion is an enterprise-ready vendor."
+      }
+    ]
+  },
+  {
+    "id": "gong11",
+    "source": "gong",
+    "call_type": "win_back",
+    "account_name": "Atlas Architecture",
+    "account_tier": "smb",
+    "arr": 9600,
+    "csm": "Priya Nair",
+    "date": "2024-10-09",
+    "duration_minutes": 35,
+    "sentiment": "mixed",
+    "excerpts": [
+      {
+        "speaker": "customer",
+        "timestamp": "4:50",
+        "quote": "We left for Obsidian six months ago because of offline mode and search. I'm open to coming back if those are solved. But I need to see real evidence — not 'on the roadmap'. If you can show me Notion working offline on a plane today, I'll seriously consider it."
+      },
+      {
+        "speaker": "customer",
+        "timestamp": "21:00",
+        "quote": "The other thing that pushed us out was guest pricing. We're an architecture firm, we collaborate with 40+ contractors per project. Per-guest pricing made Notion 3x more expensive than alternatives for our use case. If you have an agency or project-based pricing model now, that would be relevant."
+      }
+    ]
+  },
+  {
+    "id": "gong12",
+    "source": "gong",
+    "call_type": "qbr",
+    "account_name": "Pinecrest Schools",
+    "account_tier": "mid_market",
+    "arr": 27000,
+    "csm": "Aaron Liu",
+    "date": "2024-10-18",
+    "duration_minutes": 49,
+    "sentiment": "mixed",
+    "excerpts": [
+      {
+        "speaker": "customer",
+        "timestamp": "11:30",
+        "quote": "Adoption has plateaued at about 60% of our staff. The remaining 40% report that the permission model is too confusing — they've accidentally shared things publicly twice this year. We've had to add a workspace-level rule that no one can toggle public sharing without IT approval. There should just be a workspace setting that disables public sharing."
+      },
+      {
+        "speaker": "customer",
+        "timestamp": "29:45",
+        "quote": "The other adoption killer is the search experience. Our teachers can't find lesson plans they wrote three months ago. We've started telling people to put a unique ID in every page title just to make search work. That's a workaround, not a tool."
+      },
+      {
+        "speaker": "customer",
+        "timestamp": "42:10",
+        "quote": "We're optimistic but we need to see search and permission improvements in the next two quarters or our IT director is going to make us pilot Confluence for the parts of the org where Notion isn't sticking."
+      }
+    ]
+  },
+  {
+    "id": "gong13",
+    "source": "gong",
+    "call_type": "expansion_blocked",
+    "account_name": "Heritage Wealth",
+    "account_tier": "enterprise",
+    "arr": 112000,
+    "csm": "Sarah Chen",
+    "date": "2024-11-02",
+    "duration_minutes": 46,
+    "sentiment": "negative",
+    "excerpts": [
+      {
+        "speaker": "customer",
+        "timestamp": "6:00",
+        "quote": "We have a 300-seat expansion plan parked. The blocker is compliance. Our auditor said the current Notion audit log can't satisfy our books-and-records retention requirements. We need event-level immutability and a tamper-evident export. Until that exists we cannot put advisor work product in Notion."
+      },
+      {
+        "speaker": "customer",
+        "timestamp": "27:30",
+        "quote": "Adjacent to that is data residency. Our regulator is asking where customer data lives. Notion's current answer doesn't pass our internal review. EU customers especially are pushing on this. If you had a true regional data residency story we could move on three deals waiting on us internally."
+      }
+    ]
+  },
+  {
+    "id": "gong14",
+    "source": "gong",
+    "call_type": "qbr",
+    "account_name": "Bramble Health",
+    "account_tier": "mid_market",
+    "arr": 36000,
+    "csm": "David Park",
+    "date": "2024-09-26",
+    "duration_minutes": 51,
+    "sentiment": "mixed",
+    "excerpts": [
+      {
+        "speaker": "customer",
+        "timestamp": "9:40",
+        "quote": "Notion AI was the headline thing we expanded for. Six months in, our team has effectively stopped using it. The fundamental issue is it doesn't know our content. When our care coordinator asks 'what's our standard intake flow for new clients', Notion AI gives a generic answer. The actual intake flow is a page in our workspace."
+      },
+      {
+        "speaker": "customer",
+        "timestamp": "26:15",
+        "quote": "We're paying $9,600 a year for the AI add-on for 80 seats. If it's not workspace-aware in the next two quarters, we're cutting the add-on at renewal. We've evaluated Glean as an enterprise search and AI layer that sits on top of Notion. That's where the budget will go if Notion doesn't catch up."
+      },
+      {
+        "speaker": "customer",
+        "timestamp": "44:00",
+        "quote": "The mobile and timeline view limitations are smaller things, but they add up. Our care managers in the field can't load patient notes quickly. Our project leads can't visualize program rollouts on a Gantt. Each of these on its own is fine, but together they make us evaluate alternatives every renewal."
+      }
+    ]
   }
 ]
