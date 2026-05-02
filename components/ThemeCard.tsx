@@ -1,5 +1,7 @@
 "use client";
 
+import { Star, Lightbulb } from "lucide-react";
+import type { MouseEvent } from "react";
 import type { BriefItem } from "@/lib/agent";
 
 const SEVERITY: Record<string, { badge: string; bar: string; dot: string }> = {
@@ -19,13 +21,74 @@ function stripSourceTags(source: string): string {
   return source.replace(/\s*\([^)]*\)/g, "").trim();
 }
 
-export default function ThemeCard({ item, animationDelay = 0 }: { item: BriefItem; animationDelay?: number }) {
+type Props = {
+  item: BriefItem;
+  animationDelay?: number;
+  isSaved?: boolean;
+  isHighlighted?: boolean;
+  isActiveDetail?: boolean;
+  onSave?: (theme: BriefItem) => void;
+  onBodyClick?: (theme: BriefItem) => void;
+  onIdeate?: (theme: BriefItem) => void;
+};
+
+export default function ThemeCard({
+  item,
+  animationDelay = 0,
+  isSaved = false,
+  isHighlighted = false,
+  isActiveDetail = false,
+  onSave,
+  onBodyClick,
+  onIdeate,
+}: Props) {
   const s = SEVERITY[item.severity] ?? SEVERITY.medium;
+
+  const handleStar = (e: MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    onSave?.(item);
+  };
+
+  const handleIdeate = (e: MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    onIdeate?.(item);
+  };
+
+  const handleBody = () => {
+    onBodyClick?.(item);
+  };
+
+  const clickable = !!onBodyClick;
+
+  const wrapperClasses = [
+    "rounded-lg border bg-[#111113] p-4 animate-fade-in transition-colors",
+    isActiveDetail
+      ? "border-violet-500/50 ring-1 ring-violet-500/40"
+      : isHighlighted
+      ? "border-violet-500/40 ring-1 ring-violet-500/40"
+      : "border-white/[0.07]",
+    clickable ? "cursor-pointer hover:border-white/[0.14]" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <div
-      className="rounded-lg border border-white/[0.07] bg-[#111113] p-4 animate-fade-in"
+      className={wrapperClasses}
       style={{ animationDelay: `${animationDelay}ms` }}
+      onClick={clickable ? handleBody : undefined}
+      role={clickable ? "button" : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      onKeyDown={
+        clickable
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handleBody();
+              }
+            }
+          : undefined
+      }
     >
       {/* Title + severity */}
       <div className="flex items-center justify-between gap-3 mb-2.5">
@@ -34,9 +97,28 @@ export default function ThemeCard({ item, animationDelay = 0 }: { item: BriefIte
           <span className="text-[11px] text-gray-600 font-mono shrink-0">#{item.rank}</span>
           <h3 className="text-sm font-semibold text-white truncate">{item.theme_name}</h3>
         </div>
-        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border shrink-0 ${s.badge}`}>
-          {item.severity}
-        </span>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${s.badge}`}>
+            {item.severity}
+          </span>
+          {onSave && (
+            <button
+              type="button"
+              onClick={handleStar}
+              title={isSaved ? "Unsave theme" : "Save theme"}
+              className="p-1 rounded hover:bg-white/[0.06] transition-colors"
+            >
+              <Star
+                size={13}
+                className={
+                  isSaved
+                    ? "fill-amber-400 text-amber-400"
+                    : "text-gray-700 hover:text-gray-500"
+                }
+              />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Summary sentence */}
@@ -45,7 +127,18 @@ export default function ThemeCard({ item, animationDelay = 0 }: { item: BriefIte
       {/* Suggested action */}
       <div className="flex items-start gap-2 bg-emerald-500/[0.05] border border-emerald-500/[0.12] rounded-md px-3 py-2 mb-3">
         <span className="text-emerald-500 text-xs shrink-0 mt-0.5">→</span>
-        <p className="text-emerald-400 text-[11px] leading-relaxed">{item.suggested_action}</p>
+        <p className="text-emerald-400 text-[11px] leading-relaxed flex-1">{item.suggested_action}</p>
+        {onIdeate && (
+          <button
+            type="button"
+            onClick={handleIdeate}
+            title="Ideate on this theme"
+            className="flex items-center gap-1 text-[10px] font-semibold text-emerald-300 hover:text-emerald-100 ml-auto shrink-0 px-1.5 py-0.5 rounded hover:bg-emerald-500/[0.08] transition-colors"
+          >
+            <Lightbulb size={10} />
+            Ideate →
+          </button>
+        )}
       </div>
 
       {/* Stats — ARR hero + supporting */}

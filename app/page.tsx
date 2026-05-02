@@ -1,15 +1,18 @@
 "use client";
 
-import { useState, useCallback, useId, useRef } from "react";
+import { useState, useCallback, useId, useRef, useEffect } from "react";
 import { Zap, Square } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import AgentTrace from "@/components/AgentTrace";
 import OutputPanel from "@/components/OutputPanel";
 import FocusPane from "@/components/FocusPane";
+import IdeatePane from "@/components/IdeatePane";
+import ThemeDetailPane from "@/components/ThemeDetailPane";
 import { useHistory } from "@/context/HistoryContext";
 import { useAgentMode } from "@/lib/settings";
 import type { BriefItem, AgentEvent } from "@/lib/agent";
 import type { IdeaItem, IdeaEvent } from "@/lib/ideate";
+import type { SavedTheme } from "@/lib/history";
 
 type AnyEvent = AgentEvent | IdeaEvent;
 
@@ -18,6 +21,8 @@ type TraceEntry = {
   event: AnyEvent;
   timestamp: number;
 };
+
+type MiddlePanelMode = "trace" | "detail";
 
 export default function Home() {
   const [selectedSources] = useState<string[]>(["reddit", "g2", "gong", "support_tickets"]);
@@ -31,13 +36,35 @@ export default function Home() {
   const [ideas, setIdeas] = useState<IdeaItem[]>([]);
   const [isIdeating, setIsIdeating] = useState(false);
   const [isIdeateComplete, setIsIdeateComplete] = useState(false);
+
+  // Feature 1: saved theme highlight
+  const [highlightedThemeName, setHighlightedThemeName] = useState<string | null>(null);
+
+  // Feature 2: detail pane
+  const [activeDetailTheme, setActiveDetailTheme] = useState<BriefItem | null>(null);
+  const [middlePanelMode, setMiddlePanelMode] = useState<MiddlePanelMode>("trace");
+
+  // Feature 3: ideate pane
+  const [ideateSeededTheme, setIdeateSeededTheme] = useState<BriefItem | null>(null);
+  const [ideatePrompt, setIdeatePrompt] = useState("");
+  const [showIdeatePane, setShowIdeatePane] = useState(false);
+
   const prefix = useId();
   const abortRef = useRef<AbortController | null>(null);
   const runIdRef = useRef<string>(`run-${Date.now()}`);
   const themesRef = useRef<BriefItem[]>([]);
   const mode = useAgentMode();
 
-  const { addToHistory } = useHistory();
+  const {
+    addToHistory,
+    saveTheme,
+    unsaveTheme,
+    isThemeSaved,
+    savedThemes,
+    registerRestoreHandler,
+  } = useHistory();
+
+  const savedThemeKeys = new Set(savedThemes.map((s) => s.themeKey));
 
   // Left panel shows FocusPane when idle, AgentTrace when active
   const showTrace = isRunning || isIdeating || traceEntries.length > 0;
@@ -67,6 +94,10 @@ export default function Home() {
     setIsIdeating(false);
     setIsIdeateComplete(false);
     setIsRunning(true);
+    setHighlightedThemeName(null);
+    setActiveDetailTheme(null);
+    setMiddlePanelMode("trace");
+    setShowIdeatePane(false);
     abortRef.current = new AbortController();
 
     const focusToSend = focusOverride ?? (selectedFocus === "custom" ? customFocus : selectedFocus);
@@ -149,66 +180,210 @@ export default function Home() {
   }, [isRunning, selectedSources, selectedFocus, customFocus, addTrace, addToHistory, mode]);
 
   const handleFollowUp = useCallback((text: string) => {
-    // Append a visual separator before the follow-up run
     addTrace({ type: "trace", message: "── Follow-up ────────────────────────" });
     handleAnalyze(text, /* appendHistory */ true);
   }, [addTrace, handleAnalyze]);
 
-  const handleIdeate = useCallback(async () => {
-    if (isIdeating || !isComplete || themes.length === 0) return;
-    setIdeas([]);
-    setIsIdeateComplete(false);
-    setIsIdeating(true);
-    abortRef.current = new AbortController();
-    addTrace({ type: "trace", message: "── Ideation phase ────────────────────" });
+  // --- Ideation ---
+  const runIdeation = useCallback(
+    async (themesToUse: BriefItem[], focus?: string) => {
+      if (isIdeating) return;
+      setIdeas([]);
+      setIsIdeateComplete(false);
+      setIsIdeating(true);
+      abortRef.current = new AbortController();
+      if (focus) {
+        addTrace({ type: "trace", message: "── Ideation phase (focused) ──────────" });
+      } else {
+        addTrace({ type: "trace", message: "── Ideation phase ────────────────────" });
+      }
 
-    try {
-      const res = await fetch("/api/ideate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ themes }),
-        signal: abortRef.current.signal,
-      });
+      try {
+        const res = await fetch("/api/ideate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ themes: themesToUse, focus }),
+          signal: abortRef.current.signal,
+        });
 
-      if (!res.body) throw new Error("No response body");
+        if (!res.body) throw new Error("No response body");
 
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
 
-        const lines = buffer.split("\n");
-        buffer = lines.pop() ?? "";
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
 
-        for (const line of lines) {
-          if (!line.startsWith("data: ")) continue;
-          const payload = line.slice(6).trim();
-          if (payload === "[DONE]") break;
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+            const payload = line.slice(6).trim();
+            if (payload === "[DONE]") break;
 
-          try {
-            const event = JSON.parse(payload) as IdeaEvent;
-            addTrace(event);
-            if (event.type === "idea") setIdeas((prev) => [...prev, event.data]);
-            if (event.type === "idea_complete") setIsIdeateComplete(true);
-          } catch {
-            // skip malformed lines
+            try {
+              const event = JSON.parse(payload) as IdeaEvent;
+              addTrace(event);
+              if (event.type === "idea") setIdeas((prev) => [...prev, event.data]);
+              if (event.type === "idea_complete") setIsIdeateComplete(true);
+            } catch {
+              // skip malformed lines
+            }
           }
         }
+      } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") {
+          addTrace({ type: "trace", message: "— Stopped." });
+        } else {
+          addTrace({ type: "error", message: String(err) });
+        }
+      } finally {
+        setIsIdeating(false);
       }
-    } catch (err) {
-      if (err instanceof Error && err.name === "AbortError") {
-        addTrace({ type: "trace", message: "— Stopped." });
+    },
+    [isIdeating, addTrace]
+  );
+
+  const handleIdeate = useCallback(async () => {
+    if (isIdeating || !isComplete || themes.length === 0) return;
+    await runIdeation(themes);
+  }, [isIdeating, isComplete, themes, runIdeation]);
+
+  // Feature 1: save/unsave
+  const handleSaveTheme = useCallback(
+    (theme: BriefItem) => {
+      if (!summary) return;
+      if (isThemeSaved(theme.theme_name)) {
+        unsaveTheme(theme.theme_name);
       } else {
-        addTrace({ type: "error", message: String(err) });
+        saveTheme(theme, { themes, summary }, runIdRef.current);
       }
-    } finally {
+    },
+    [summary, themes, isThemeSaved, saveTheme, unsaveTheme]
+  );
+
+  // Feature 1: restore from sidebar
+  const handleRestoreSession = useCallback(
+    (saved: SavedTheme) => {
+      setThemes(saved.sessionSnapshot.themes);
+      themesRef.current = saved.sessionSnapshot.themes;
+      setSummary(saved.sessionSnapshot.summary);
+      setIsComplete(true);
+      setIsRunning(false);
       setIsIdeating(false);
-    }
-  }, [isIdeating, isComplete, themes, addTrace]);
+      setIsIdeateComplete(false);
+      setIdeas([]);
+      setHighlightedThemeName(saved.themeKey);
+      setActiveDetailTheme(null);
+      setMiddlePanelMode("trace");
+      setShowIdeatePane(false);
+      runIdRef.current = saved.sessionId;
+    },
+    []
+  );
+
+  // Register the restore bridge so Sidebar can trigger restore from context
+  useEffect(() => {
+    registerRestoreHandler(handleRestoreSession);
+    return () => registerRestoreHandler(null);
+  }, [registerRestoreHandler, handleRestoreSession]);
+
+  // Feature 2: open detail on card body click
+  const handleThemeBodyClick = useCallback((theme: BriefItem) => {
+    setActiveDetailTheme(theme);
+    setMiddlePanelMode("detail");
+    setShowIdeatePane(false);
+  }, []);
+
+  const handleCloseDetail = useCallback(() => {
+    setActiveDetailTheme(null);
+    setMiddlePanelMode("trace");
+  }, []);
+
+  // Feature 3: per-theme ideate trigger
+  const handleIdeateTheme = useCallback((theme: BriefItem) => {
+    setIdeateSeededTheme(theme);
+    setIdeatePrompt(`${theme.theme_name}: ${theme.problem_statement}`);
+    setShowIdeatePane(true);
+    setMiddlePanelMode("trace");
+  }, []);
+
+  const handleRunFocusedIdeation = useCallback(async () => {
+    const prompt = ideatePrompt.trim();
+    if (!prompt || isIdeating) return;
+    setShowIdeatePane(false);
+    // Put the seeded theme first so it definitely makes the top-3 slice
+    const orderedThemes = ideateSeededTheme
+      ? [ideateSeededTheme, ...themes.filter((t) => t.theme_name !== ideateSeededTheme.theme_name)]
+      : themes;
+    await runIdeation(orderedThemes, prompt);
+  }, [ideatePrompt, isIdeating, ideateSeededTheme, themes, runIdeation]);
+
+  const handleCancelIdeate = useCallback(() => {
+    setShowIdeatePane(false);
+  }, []);
+
+  // Middle-panel slot priority:
+  //   if (!showTrace && !showIdeatePane)          → FocusPane
+  //   else if (showIdeatePane)                    → IdeatePane
+  //   else if (middlePanelMode === "detail")      → ThemeDetailPane
+  //   else                                        → AgentTrace
+  let middlePanel: React.ReactNode;
+  if (!showTrace && !showIdeatePane) {
+    middlePanel = (
+      <FocusPane
+        selectedFocus={selectedFocus}
+        customFocus={customFocus}
+        onSelectFocus={setSelectedFocus}
+        onCustomFocus={setCustomFocus}
+        onRun={() => handleAnalyze()}
+        disabled={selectedSources.length === 0}
+      />
+    );
+  } else if (showIdeatePane) {
+    middlePanel = (
+      <IdeatePane
+        seedTheme={ideateSeededTheme}
+        prompt={ideatePrompt}
+        onPromptChange={setIdeatePrompt}
+        onRun={handleRunFocusedIdeation}
+        onCancel={handleCancelIdeate}
+        disabled={isIdeating || !ideatePrompt.trim() || themes.length === 0}
+      />
+    );
+  } else if (middlePanelMode === "detail" && activeDetailTheme) {
+    middlePanel = (
+      <ThemeDetailPane
+        theme={activeDetailTheme}
+        allThemes={themes}
+        mode={middlePanelMode}
+        onModeChange={(m) => {
+          if (m === "trace" && traceEntries.length === 0) return;
+          setMiddlePanelMode(m);
+        }}
+        onSelectTheme={(t) => setActiveDetailTheme(t)}
+        onClose={handleCloseDetail}
+        hasTrace={traceEntries.length > 0}
+      />
+    );
+  } else {
+    middlePanel = (
+      <AgentTrace
+        entries={traceEntries}
+        isRunning={isRunning}
+        isIdeating={isIdeating}
+        onFollowUp={handleFollowUp}
+        showDetailToggle={!!activeDetailTheme}
+        onSwitchToDetail={
+          activeDetailTheme ? () => setMiddlePanelMode("detail") : undefined
+        }
+      />
+    );
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#090909]">
@@ -259,20 +434,9 @@ export default function Home() {
 
         {/* Split view — trace:output 35:65 */}
         <div className="flex-1 grid grid-cols-[35fr_65fr] gap-0 min-h-0 overflow-hidden">
-          {/* Left: FocusPane (idle) or AgentTrace (active) */}
+          {/* Left: FocusPane / IdeatePane / ThemeDetailPane / AgentTrace */}
           <div className="flex flex-col min-h-0 border-r border-white/[0.06]">
-            {showTrace ? (
-              <AgentTrace entries={traceEntries} isRunning={isRunning} isIdeating={isIdeating} onFollowUp={handleFollowUp} />
-            ) : (
-              <FocusPane
-                selectedFocus={selectedFocus}
-                customFocus={customFocus}
-                onSelectFocus={setSelectedFocus}
-                onCustomFocus={setCustomFocus}
-                onRun={() => handleAnalyze()}
-                disabled={selectedSources.length === 0}
-              />
-            )}
+            {middlePanel}
           </div>
           {/* Right: output */}
           <div className="flex flex-col min-h-0">
@@ -285,6 +449,12 @@ export default function Home() {
               isIdeating={isIdeating}
               isIdeateComplete={isIdeateComplete}
               onIdeate={handleIdeate}
+              savedThemeKeys={savedThemeKeys}
+              onSaveTheme={handleSaveTheme}
+              highlightedThemeName={highlightedThemeName}
+              activeDetailThemeName={activeDetailTheme?.theme_name ?? null}
+              onThemeBodyClick={handleThemeBodyClick}
+              onIdeateTheme={handleIdeateTheme}
             />
           </div>
         </div>

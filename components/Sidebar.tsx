@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart2, Database, FileText, Settings, Zap, Bookmark, Lightbulb } from "lucide-react";
+import { BarChart2, Database, FileText, Settings, Zap, Bookmark, Lightbulb, Star, X } from "lucide-react";
 import { Fragment } from "react";
 import { useHistory } from "@/context/HistoryContext";
 import { formatRelativeTime, formatARR } from "@/lib/history";
@@ -30,7 +30,7 @@ const NAV_ITEMS: NavItem[] = [
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { history, saveReport, isReport } = useHistory();
+  const { history, saveReport, isReport, savedThemes, unsaveTheme, restoreSession } = useHistory();
 
   return (
     <aside className="w-56 shrink-0 flex flex-col bg-[#0c0c0e] border-r border-white/[0.06] h-screen">
@@ -98,6 +98,49 @@ export default function Sidebar() {
                   </Link>
                 );
               })}
+
+              {item.id === "analyze" && savedThemes.length > 0 && (
+                <div className="mt-1.5 mb-1.5">
+                  <div className="flex items-center gap-1.5 pl-7 pr-2.5 pb-1">
+                    <Star size={10} className="text-amber-400/80 shrink-0" />
+                    <span className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider">Saved</span>
+                  </div>
+                  <div className="space-y-0.5">
+                    {savedThemes.map((saved) => (
+                      <div
+                        key={saved.themeKey}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => restoreSession(saved)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            restoreSession(saved);
+                          }
+                        }}
+                        className="flex items-center gap-1.5 pl-8 pr-1.5 py-1.5 rounded-md group hover:bg-white/[0.04] cursor-pointer transition-colors"
+                        title={`Restore “${saved.themeKey}”`}
+                      >
+                        <Star size={10} className="fill-amber-400 text-amber-400 shrink-0" />
+                        <span className="flex-1 min-w-0 text-[11px] text-gray-400 group-hover:text-gray-200 truncate leading-none">
+                          {saved.themeKey}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            unsaveTheme(saved.themeKey);
+                          }}
+                          title="Remove from saved"
+                          className="shrink-0 p-0.5 rounded hover:bg-white/[0.08] opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X size={10} className="text-gray-600 hover:text-gray-300" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {item.id === "analyze" && history.length > 0 && (
                 <div className="mt-0.5 mb-1.5 space-y-0.5">

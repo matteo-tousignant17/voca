@@ -15,6 +15,12 @@ type Props = {
   isIdeating: boolean;
   isIdeateComplete: boolean;
   onIdeate: () => void;
+  savedThemeKeys?: Set<string>;
+  onSaveTheme?: (theme: BriefItem) => void;
+  highlightedThemeName?: string | null;
+  activeDetailThemeName?: string | null;
+  onThemeBodyClick?: (theme: BriefItem) => void;
+  onIdeateTheme?: (theme: BriefItem) => void;
 };
 
 function formatARR(n: number): string {
@@ -41,6 +47,8 @@ function groupedByTheme(ideas: IdeaItem[]): [string, IdeaItem[]][] {
 export default function OutputPanel({
   themes, isRunning, isComplete, summary,
   ideas, isIdeating, isIdeateComplete, onIdeate,
+  savedThemeKeys, onSaveTheme, highlightedThemeName,
+  activeDetailThemeName, onThemeBodyClick, onIdeateTheme,
 }: Props) {
   return (
     <div className="flex flex-col h-full bg-[#090909]">
@@ -83,7 +91,17 @@ export default function OutputPanel({
 
         {/* Theme cards */}
         {themes.map((theme, i) => (
-          <ThemeCard key={theme.theme_name} item={theme} animationDelay={i * 80} />
+          <ThemeCard
+            key={theme.theme_name}
+            item={theme}
+            animationDelay={i * 80}
+            isSaved={savedThemeKeys?.has(theme.theme_name) ?? false}
+            isHighlighted={highlightedThemeName === theme.theme_name}
+            isActiveDetail={activeDetailThemeName === theme.theme_name}
+            onSave={onSaveTheme}
+            onBodyClick={onThemeBodyClick}
+            onIdeate={onIdeateTheme}
+          />
         ))}
 
         {/* Ideate CTA — shown after analysis completes, before ideation starts */}

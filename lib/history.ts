@@ -24,6 +24,18 @@ export const SOURCE_LABELS: Record<string, string> = {
 
 const HISTORY_KEY = "voca_history";
 const REPORTS_KEY = "voca_reports";
+const SAVED_THEMES_KEY = "voca_saved_themes";
+
+export type SavedTheme = {
+  themeKey: string;
+  theme: BriefItem;
+  sessionId: string;
+  sessionSnapshot: {
+    themes: BriefItem[];
+    summary: HistoryEntry["summary"];
+  };
+  savedAt: number;
+};
 
 export function loadHistory(): HistoryEntry[] {
   if (typeof window === "undefined") return [];
@@ -49,6 +61,19 @@ export function loadReports(): HistoryEntry[] {
 
 export function persistReports(entries: HistoryEntry[]): void {
   localStorage.setItem(REPORTS_KEY, JSON.stringify(entries));
+}
+
+export function loadSavedThemes(): SavedTheme[] {
+  if (typeof window === "undefined") return [];
+  try {
+    return JSON.parse(localStorage.getItem(SAVED_THEMES_KEY) ?? "[]");
+  } catch {
+    return [];
+  }
+}
+
+export function persistSavedThemes(themes: SavedTheme[]): void {
+  localStorage.setItem(SAVED_THEMES_KEY, JSON.stringify(themes));
 }
 
 export function formatARR(n: number): string {

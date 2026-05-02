@@ -18,6 +18,8 @@ type Props = {
   isRunning: boolean;
   isIdeating?: boolean;
   onFollowUp?: (text: string) => void;
+  showDetailToggle?: boolean;
+  onSwitchToDetail?: () => void;
 };
 
 const TOOL_META: Record<string, { label: string; color: string; dot: string }> = {
@@ -291,7 +293,7 @@ function buildView(entries: TraceEntry[]): RenderedEntry[] {
   return out;
 }
 
-export default function AgentTrace({ entries, isRunning, isIdeating, onFollowUp }: Props) {
+export default function AgentTrace({ entries, isRunning, isIdeating, onFollowUp, showDetailToggle, onSwitchToDetail }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const isLive = isRunning || isIdeating;
@@ -364,6 +366,20 @@ export default function AgentTrace({ entries, isRunning, isIdeating, onFollowUp 
           )}
         </div>
         <div className="flex items-center gap-3">
+          {showDetailToggle && onSwitchToDetail && (
+            <div className="flex items-center gap-0.5 bg-white/[0.04] border border-white/[0.06] rounded-md p-0.5">
+              <span className="text-[10px] font-semibold px-2.5 py-1 rounded bg-white/[0.12] text-white">
+                Trace
+              </span>
+              <button
+                type="button"
+                onClick={onSwitchToDetail}
+                className="text-[10px] font-semibold px-2.5 py-1 rounded text-gray-500 hover:text-gray-300 transition-colors"
+              >
+                Detail
+              </button>
+            </div>
+          )}
           <span className="hidden sm:flex items-center gap-1 text-[10px] text-gray-700 font-mono">
             <span className="flex items-center gap-1">
               <Brain size={10} className="text-violet-400/70" />
