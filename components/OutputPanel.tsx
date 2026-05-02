@@ -55,7 +55,7 @@ export default function OutputPanel({
         {isComplete && summary && (
           <div className="flex items-center gap-3 text-[11px]">
             <span className="text-gray-600">{summary.total_themes} themes</span>
-            <span className="text-rose-400 font-semibold">{formatARR(summary.total_arr_at_risk)} at risk</span>
+            <span className="text-rose-400 font-semibold">{formatARR(summary.total_arr_at_risk)} at risk · 12mo exposure</span>
           </div>
         )}
       </div>
