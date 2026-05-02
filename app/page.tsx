@@ -358,6 +358,7 @@ export default function Home() {
   } else if (middlePanelMode === "detail" && activeDetailTheme) {
     middlePanel = (
       <ThemeDetailPane
+        key={activeDetailTheme.theme_name}
         theme={activeDetailTheme}
         allThemes={themes}
         mode={middlePanelMode}
