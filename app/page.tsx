@@ -16,15 +16,8 @@ type TraceEntry = {
   timestamp: number;
 };
 
-const SOURCES = [
-  { id: "reddit", label: "Reddit", count: 35 },
-  { id: "g2", label: "G2 Reviews", count: 25 },
-  { id: "gong", label: "Gong", count: 14 },
-  { id: "support_tickets", label: "Support", count: 28 },
-];
-
 export default function Home() {
-  const [selectedSources, setSelectedSources] = useState<string[]>(["reddit", "g2", "gong", "support_tickets"]);
+  const [selectedSources] = useState<string[]>(["reddit", "g2", "gong", "support_tickets"]);
   const [traceEntries, setTraceEntries] = useState<TraceEntry[]>([]);
   const [themes, setThemes] = useState<BriefItem[]>([]);
   const [isRunning, setIsRunning] = useState(false);
@@ -125,7 +118,7 @@ export default function Home() {
     setIsIdeateComplete(false);
     setIsIdeating(true);
     abortRef.current = new AbortController();
-    addTrace({ type: "trace", message: "── Ideation phase ──────────────────" });
+    addTrace({ type: "trace", message: "── Ideation phase ────────────────────" });
 
     try {
       const res = await fetch("/api/ideate", {
@@ -180,15 +173,6 @@ export default function Home() {
     }
   }, [isIdeating, isComplete, themes, addTrace]);
 
-  const toggleSource = (id: string) => {
-    if (isRunning || isIdeating) return;
-    setSelectedSources((prev) =>
-      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
-    );
-  };
-
-  const totalItems = SOURCES.filter((s) => selectedSources.includes(s.id)).reduce((sum, s) => sum + s.count, 0);
-
   return (
     <div className="flex h-screen overflow-hidden bg-[#090909]">
       <Sidebar />
@@ -202,33 +186,6 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5">
-              {SOURCES.map((src) => {
-                const active = selectedSources.includes(src.id);
-                return (
-                  <button
-                    key={src.id}
-                    onClick={() => toggleSource(src.id)}
-                    disabled={isRunning}
-                    className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium border transition-all disabled:cursor-not-allowed ${
-                      active
-                        ? "bg-white/[0.07] border-white/[0.12] text-gray-200"
-                        : "bg-transparent border-transparent text-gray-600 hover:text-gray-400 hover:border-white/[0.06]"
-                    }`}
-                  >
-                    {src.label}
-                    <span className={`text-[10px] ${active ? "text-gray-500" : "text-gray-700"}`}>
-                      {src.count}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="w-px h-5 bg-white/[0.08]" />
-            <span className="text-xs text-gray-600">{totalItems} items</span>
-            <div className="w-px h-5 bg-white/[0.08]" />
-
             <button
               onClick={isRunning || isIdeating ? handleStop : handleAnalyze}
               disabled={!isRunning && !isIdeating && selectedSources.length === 0}
