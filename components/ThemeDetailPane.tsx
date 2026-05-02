@@ -133,7 +133,23 @@ export default function ThemeDetailPane({
           <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${SEVERITY_DOT[theme.severity] ?? "bg-gray-500"}`} />
           <span className="text-xs font-medium text-white truncate">{theme.theme_name}</span>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+          {onIdeate ? (
+            <button
+              type="button"
+              disabled={ideateDisabled}
+              onClick={() => onIdeate(theme)}
+              title={
+                ideateDisabled
+                  ? "Wait for analysis to finish (or stop ideation) before opening Ideate."
+                  : "Open ideation seeded with this theme"
+              }
+              className="flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-colors shadow-sm shadow-indigo-950/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-indigo-600"
+            >
+              <Lightbulb size={11} />
+              Ideate
+            </button>
+          ) : null}
           <div className="flex items-center gap-0.5 bg-white/[0.04] border border-white/[0.06] rounded-md p-0.5">
             <button
               type="button"
