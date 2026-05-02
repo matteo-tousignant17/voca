@@ -1,0 +1,113 @@
+[
+  {
+    "id": "gong1",
+    "source": "gong",
+    "call_type": "renewal_risk",
+    "account_name": "Meridian Capital Group",
+    "account_tier": "enterprise",
+    "arr": 96000,
+    "csm": "Sarah Chen",
+    "date": "2024-11-14",
+    "duration_minutes": 38,
+    "sentiment": "negative",
+    "excerpts": [
+      {
+        "speaker": "customer",
+        "timestamp": "4:22",
+        "quote": "Look, we love Notion conceptually but the SSO integration with Okta has broken three times in the last two months. Our IT team is spending 2-3 hours every time fixing it. At our scale that's real money. We need this to just work reliably before we can sign another year."
+      },
+      {
+        "speaker": "customer",
+        "timestamp": "12:45",
+        "quote": "The audit trail issue is a bigger problem for us. We're in financial services. Our compliance team did a review and Notion can't tell us clearly who edited what and when. That's a blocker for our regulatory requirements. If this isn't on the roadmap soon, we're going to have to look at Confluence for our sensitive content."
+      },
+      {
+        "speaker": "customer",
+        "timestamp": "27:10",
+        "quote": "I want to be clear — we like the product. Our teams are productive in it. But we have 230 users and two critical enterprise requirements that aren't being met. Fix the SSO reliability and give us a real audit log and we'll sign a multi-year deal. Without those, I can't justify the renewal to my CFO."
+      }
+    ]
+  },
+  {
+    "id": "gong2",
+    "source": "gong",
+    "call_type": "churn_save",
+    "account_name": "Velocity Agency",
+    "account_tier": "mid_market",
+    "arr": 18000,
+    "csm": "Marcus Webb",
+    "date": "2024-11-07",
+    "duration_minutes": 52,
+    "sentiment": "very_negative",
+    "excerpts": [
+      {
+        "speaker": "customer",
+        "timestamp": "3:15",
+        "quote": "We had a data loss incident. Our lead designer spent two days on a client presentation in Notion, and a simultaneous editing conflict wiped out about 30% of it. We had no backup. That killed trust for our whole team. Some people just refuse to use it now."
+      },
+      {
+        "speaker": "customer",
+        "timestamp": "18:30",
+        "quote": "I know you're telling me it's a known issue and the team is working on it. But we've heard that for eight months. Meanwhile my team is paying the price literally — we use Figma for design specs now and export to Notion manually, which is a massive workflow tax. This isn't sustainable."
+      },
+      {
+        "speaker": "customer",
+        "timestamp": "41:00",
+        "quote": "The pricing increase made things worse. We went from $15K to $18K this year and I had to fight for that budget. And then the data loss incident happened. My leadership is asking me why we're paying more for a product that lost client work. It's a really hard conversation."
+      }
+    ]
+  },
+  {
+    "id": "gong3",
+    "source": "gong",
+    "call_type": "expansion_blocked",
+    "account_name": "Brightpath Education",
+    "account_tier": "mid_market",
+    "arr": 24000,
+    "csm": "Priya Nair",
+    "date": "2024-10-29",
+    "duration_minutes": 29,
+    "sentiment": "neutral",
+    "excerpts": [
+      {
+        "speaker": "customer",
+        "timestamp": "6:40",
+        "quote": "We want to expand Notion to our field teams — about 80 more people across 12 offices in different countries. But there are two blockers. First, our field teams need offline access. They're in areas with poor connectivity constantly. Second, the mobile experience is too slow for quick lookups. Our field reps would revolt."
+      },
+      {
+        "speaker": "customer",
+        "timestamp": "15:22",
+        "quote": "If you had offline mode, I could get you 80 more seats today. That's an easy decision. Right now I can't put those 80 people on a tool that requires internet to function. Even when they have connectivity, loading a page on mobile takes forever. The desktop is great but mobile has to be fixed."
+      },
+      {
+        "speaker": "customer",
+        "timestamp": "23:50",
+        "quote": "I've been a champion for Notion internally. I want this to work. But I need to be able to tell my VP of Operations that it will work reliably in the field. Can you give me any roadmap visibility on offline support? Even a rough timeline would help me make the case."
+      }
+    ]
+  },
+  {
+    "id": "gong4",
+    "source": "gong",
+    "call_type": "qbr",
+    "account_name": "NovaSoft Technologies",
+    "account_tier": "enterprise",
+    "arr": 144000,
+    "csm": "David Park",
+    "date": "2024-10-15",
+    "duration_minutes": 67,
+    "sentiment": "mixed",
+    "excerpts": [
+      {
+        "speaker": "customer",
+        "timestamp": "22:10",
+        "quote": "The API performance is our main technical blocker right now. We built an internal product on top of the Notion API — about 1,200 rows in a database we query constantly. Response times are 3-7 seconds per call. Our engineers keep asking me if we should migrate to a real database. I keep defending Notion but it's getting harder."
+      },
+      {
+        "speaker": "customer",
+        "timestamp": "45:30",
+        "quote": "Search is the other one. We're three years in, we have thousands of docs. Finding things is genuinely hard. My suggestion would be full-text search across all content types, including inside table cells. Right now search just doesn't work for a company our size with our content volume."
+      }
+    ]
+  }
+]

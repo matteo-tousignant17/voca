@@ -1,0 +1,37 @@
+{
+  "company": "Notion",
+  "total_customers": 750,
+  "total_arr": 8000000,
+  "segments": {
+    "smb": {
+      "label": "SMB",
+      "description": "1-50 employees",
+      "customers": 500,
+      "avg_arr": 2000,
+      "total_arr": 1000000,
+      "churn_rate_annual": 0.18,
+      "expansion_potential": "low",
+      "color": "#60a5fa"
+    },
+    "mid_market": {
+      "label": "Mid-Market",
+      "description": "51-500 employees",
+      "customers": 200,
+      "avg_arr": 15000,
+      "total_arr": 3000000,
+      "churn_rate_annual": 0.12,
+      "expansion_potential": "high",
+      "color": "#a78bfa"
+    },
+    "enterprise": {
+      "label": "Enterprise",
+      "description": "500+ employees",
+      "customers": 50,
+      "avg_arr": 80000,
+      "total_arr": 4000000,
+      "churn_rate_annual": 0.07,
+      "expansion_potential": "very_high",
+      "color": "#34d399"
+    }
+  }
+}
