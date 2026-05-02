@@ -2,10 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart2, Database, FileText, Settings, Zap } from "lucide-react";
+import { BarChart2, Database, FileText, Settings, Zap, Lightbulb } from "lucide-react";
 
 const NAV_ITEMS = [
-  { id: "analyze",  label: "Analyze",  icon: BarChart2, href: "/" },
+  {
+    id: "analyze", label: "Analyze", icon: BarChart2, href: "/",
+    children: [
+      { id: "ideate", label: "Ideate", icon: Lightbulb, href: "/#ideate" },
+    ],
+  },
   { id: "sources",  label: "Sources",  icon: Database,  href: "/sources" },
   { id: "reports",  label: "Reports",  icon: FileText,   href: "/reports", soon: true },
   { id: "settings", label: "Settings", icon: Settings,   href: "/settings", soon: true },
@@ -48,23 +53,39 @@ export default function Sidebar() {
           const Icon = item.icon;
           const active = pathname === item.href;
           return (
-            <Link
-              key={item.id}
-              href={item.soon ? "#" : item.href}
-              className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm transition-colors ${
-                active
-                  ? "bg-white/[0.08] text-white"
-                  : "text-gray-500 hover:text-gray-300 hover:bg-white/[0.04]"
-              }`}
-            >
-              <Icon size={15} className={active ? "text-violet-400" : "text-gray-600"} />
-              <span className="font-medium flex-1">{item.label}</span>
-              {item.soon && (
-                <span className="text-[10px] bg-gray-800 text-gray-600 px-1.5 py-0.5 rounded-full">
-                  Soon
-                </span>
-              )}
-            </Link>
+            <div key={item.id}>
+              <Link
+                href={item.soon ? "#" : item.href}
+                className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm transition-colors ${
+                  active
+                    ? "bg-white/[0.08] text-white"
+                    : "text-gray-500 hover:text-gray-300 hover:bg-white/[0.04]"
+                }`}
+              >
+                <Icon size={15} className={active ? "text-violet-400" : "text-gray-600"} />
+                <span className="font-medium flex-1">{item.label}</span>
+                {item.soon && (
+                  <span className="text-[10px] bg-gray-800 text-gray-600 px-1.5 py-0.5 rounded-full">
+                    Soon
+                  </span>
+                )}
+              </Link>
+
+              {/* Sub-items — shown when parent is active */}
+              {active && item.children?.map((child) => {
+                const ChildIcon = child.icon;
+                return (
+                  <Link
+                    key={child.id}
+                    href={child.href}
+                    className="flex items-center gap-2 pl-7 pr-2.5 py-1.5 rounded-md text-xs text-gray-500 hover:text-gray-300 hover:bg-white/[0.04] transition-colors mt-0.5"
+                  >
+                    <ChildIcon size={12} className="text-gray-600 shrink-0" />
+                    <span>{child.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
           );
         })}
       </nav>
