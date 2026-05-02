@@ -2,6 +2,7 @@
 
 import { Clock, Trash2, Zap } from "lucide-react";
 import { useHistory } from "@/context/HistoryContext";
+import type { AgentMode } from "@/lib/settings";
 
 const FOCUS_OPTIONS = [
   {
@@ -89,6 +90,7 @@ type Props = {
   onCustomFocus: (val: string) => void;
   onRun: () => void;
   disabled: boolean;
+  mode?: AgentMode;
 };
 
 function runButtonLabel(selectedFocus: string, customFocus: string): string {
@@ -98,14 +100,22 @@ function runButtonLabel(selectedFocus: string, customFocus: string): string {
   return opt ? `Analyze: ${opt.label}` : "Run Agent";
 }
 
-export default function FocusPane({ selectedFocus, customFocus, onSelectFocus, onCustomFocus, onRun, disabled }: Props) {
+export default function FocusPane({ selectedFocus, customFocus, onSelectFocus, onCustomFocus, onRun, disabled, mode }: Props) {
   const { history, clearHistory } = useHistory();
 
   return (
     <div className="flex flex-col h-full bg-[#0c0c0e] overflow-y-auto">
       {/* Header */}
-      <div className="px-5 pt-5 pb-4 shrink-0">
+      <div className="px-5 pt-5 pb-4 shrink-0 flex items-center justify-between">
         <p className="text-xs font-semibold text-white">What are you trying to answer?</p>
+        {mode === "demo" && (
+          <span
+            className="text-[10px] font-semibold text-emerald-300 bg-emerald-500/[0.08] border border-emerald-500/20 px-2 py-0.5 rounded-md"
+            title="Deterministic playback — change in Settings"
+          >
+            DEMO MODE
+          </span>
+        )}
       </div>
 
       {/* Focus options */}
