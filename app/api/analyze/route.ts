@@ -15,12 +15,12 @@ export async function POST(req: NextRequest) {
   const mode: "live" | "demo" = body.mode === "live" ? "live" : "demo";
 
   const requested = Array.isArray(body.sources) ? (body.sources as string[]) : null;
-  // In demo mode, fan out across all 7 demo sources unless the caller explicitly
-  // sends a list of demo-source IDs (i.e. anything overlapping the demo catalog).
+  // In demo mode always use the full demo source catalog so the scripted agent
+  // shows all 7 parallel tool calls and orchestration steps. The home page
+  // selectedSources contains live-mode IDs which would otherwise filter down
+  // to a partial subset and break the demo narrative.
   const sources = mode === "demo"
-    ? (requested && requested.some((s) => DEMO_DEFAULT_SOURCES.includes(s))
-        ? requested.filter((s) => DEMO_DEFAULT_SOURCES.includes(s))
-        : DEMO_DEFAULT_SOURCES)
+    ? DEMO_DEFAULT_SOURCES
     : (requested ?? LIVE_DEFAULT_SOURCES);
 
   const encoder = new TextEncoder();
