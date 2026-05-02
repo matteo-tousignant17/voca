@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useCallback, useId } from "react";
+import { Zap, ChevronDown } from "lucide-react";
+import Sidebar from "@/components/Sidebar";
 import AgentTrace from "@/components/AgentTrace";
 import OutputPanel from "@/components/OutputPanel";
 import type { BriefItem, AgentEvent } from "@/lib/agent";
@@ -12,10 +14,10 @@ type TraceEntry = {
 };
 
 const SOURCES = [
-  { id: "reddit", label: "Reddit", icon: "🟠", description: "r/Notion community posts" },
-  { id: "g2", label: "G2 Reviews", icon: "⭐", description: "10 verified reviews" },
-  { id: "gong", label: "Gong Calls", icon: "📞", description: "4 CS & sales calls" },
-  { id: "support_tickets", label: "Support Tickets", icon: "🎫", description: "12 open tickets" },
+  { id: "reddit", label: "Reddit", count: 15 },
+  { id: "g2", label: "G2 Reviews", count: 10 },
+  { id: "gong", label: "Gong", count: 4 },
+  { id: "support_tickets", label: "Support", count: 12 },
 ];
 
 export default function Home() {
@@ -98,92 +100,93 @@ export default function Home() {
   }, [isRunning, selectedSources, addTrace]);
 
   const toggleSource = (id: string) => {
+    if (isRunning) return;
     setSelectedSources((prev) =>
       prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
     );
   };
 
-  const totalFeedbackItems =
-    (selectedSources.includes("reddit") ? 15 : 0) +
-    (selectedSources.includes("g2") ? 10 : 0) +
-    (selectedSources.includes("gong") ? 4 : 0) +
-    (selectedSources.includes("support_tickets") ? 12 : 0);
+  const totalItems = SOURCES.filter((s) => selectedSources.includes(s.id)).reduce((sum, s) => sum + s.count, 0);
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white flex flex-col">
-      {/* Top bar */}
-      <header className="border-b border-gray-800 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-screen-xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-sm font-bold">
-              V
-            </div>
+    <div className="flex h-screen overflow-hidden bg-[#090909]">
+      <Sidebar />
+
+      {/* Main content */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+        {/* Top bar */}
+        <header className="h-14 shrink-0 flex items-center justify-between px-5 border-b border-white/[0.06] bg-[#0c0c0e]/80 backdrop-blur-sm">
+          <div className="flex items-center gap-4">
             <div>
-              <div className="font-semibold text-white leading-none">VoC Agent</div>
-              <div className="text-xs text-gray-500 mt-0.5">Voice of Customer · Powered by Claude</div>
+              <h1 className="text-sm font-semibold text-white">Analyze</h1>
+              <p className="text-[11px] text-gray-500 leading-none mt-0.5">Synthesize feedback · prioritize by ARR</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-xs text-gray-500">
-            <span>Demo: Notion</span>
-            <span className="w-1 h-1 rounded-full bg-gray-600" />
-            <span>$8M ARR · 750 customers</span>
-          </div>
-        </div>
-      </header>
 
-      <div className="max-w-screen-xl mx-auto w-full px-6 py-6 flex flex-col gap-6 flex-1">
-        {/* Control bar */}
-        <div className="flex items-center gap-4 flex-wrap">
-          <div className="flex items-center gap-2 flex-wrap">
-            {SOURCES.map((src) => {
-              const active = selectedSources.includes(src.id);
-              return (
-                <button
-                  key={src.id}
-                  onClick={() => toggleSource(src.id)}
-                  disabled={isRunning}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
-                    active
-                      ? "bg-gray-800 border-gray-600 text-white"
-                      : "bg-transparent border-gray-800 text-gray-600 hover:border-gray-700 hover:text-gray-400"
-                  } disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
-                  <span>{src.icon}</span>
-                  <span>{src.label}</span>
-                </button>
-              );
-            })}
-          </div>
+          <div className="flex items-center gap-3">
+            {/* Source toggles */}
+            <div className="flex items-center gap-1.5">
+              {SOURCES.map((src) => {
+                const active = selectedSources.includes(src.id);
+                return (
+                  <button
+                    key={src.id}
+                    onClick={() => toggleSource(src.id)}
+                    disabled={isRunning}
+                    className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium border transition-all disabled:cursor-not-allowed ${
+                      active
+                        ? "bg-white/[0.07] border-white/[0.12] text-gray-200"
+                        : "bg-transparent border-transparent text-gray-600 hover:text-gray-400 hover:border-white/[0.06]"
+                    }`}
+                  >
+                    {src.label}
+                    <span className={`text-[10px] ${active ? "text-gray-500" : "text-gray-700"}`}>
+                      {src.count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
 
-          <div className="text-xs text-gray-600 hidden sm:block">
-            {totalFeedbackItems} feedback items
-          </div>
+            <div className="w-px h-5 bg-white/[0.08]" />
 
-          <div className="ml-auto">
+            {/* Item count */}
+            <span className="text-xs text-gray-600">{totalItems} items</span>
+
+            <div className="w-px h-5 bg-white/[0.08]" />
+
+            {/* Run button */}
             <button
               onClick={handleAnalyze}
               disabled={isRunning || selectedSources.length === 0}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-900/30"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {isRunning ? (
                 <>
-                  <span className="w-3 h-3 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                  Analyzing...
+                  <span className="w-2.5 h-2.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                  Running...
                 </>
               ) : (
                 <>
-                  <span>⚡</span>
-                  Run VoC Agent
+                  <Zap size={12} />
+                  Run Agent
                 </>
               )}
             </button>
           </div>
-        </div>
+        </header>
 
         {/* Split view */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-1" style={{ minHeight: "calc(100vh - 200px)" }}>
-          <AgentTrace entries={traceEntries} isRunning={isRunning} />
-          <OutputPanel themes={themes} isRunning={isRunning} isComplete={isComplete} summary={summary} />
+        <div className="flex-1 grid grid-cols-2 gap-0 min-h-0 overflow-hidden">
+          {/* Left: agent trace */}
+          <div className="flex flex-col min-h-0 border-r border-white/[0.06]">
+            <AgentTrace entries={traceEntries} isRunning={isRunning} />
+          </div>
+          {/* Right: output */}
+          <div className="flex flex-col min-h-0">
+            <OutputPanel themes={themes} isRunning={isRunning} isComplete={isComplete} summary={summary} />
+          </div>
         </div>
       </div>
     </div>
