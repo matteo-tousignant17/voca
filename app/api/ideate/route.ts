@@ -8,13 +8,14 @@ export const maxDuration = 60;
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const themes: BriefItem[] = body.themes ?? [];
+  const focus: string | undefined = typeof body.focus === "string" ? body.focus : undefined;
 
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        for await (const event of runIdeateAgent(themes)) {
+        for await (const event of runIdeateAgent(themes, focus)) {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
         }
       } catch (err) {

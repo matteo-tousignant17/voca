@@ -229,13 +229,27 @@ function executeIdeateTool(
   return {};
 }
 
-export async function* runIdeateAgent(themes: BriefItem[]): AsyncGenerator<IdeaEvent> {
+export async function* runIdeateAgent(
+  themes: BriefItem[],
+  focus?: string,
+): AsyncGenerator<IdeaEvent> {
+  const trimmedFocus = focus?.trim();
   const top3 = [...themes].sort((a, b) => b.arr_at_risk - a.arr_at_risk).slice(0, 3);
 
   yield { type: "trace", message: `Ideating over top ${top3.length} themes by ARR...` };
   yield { type: "trace", message: `Themes: ${top3.map((t) => t.theme_name).join(", ")}` };
+  if (trimmedFocus) {
+    yield {
+      type: "trace",
+      message: `Focus: ${trimmedFocus.slice(0, 120)}${trimmedFocus.length > 120 ? "…" : ""}`,
+    };
+  }
 
-  const systemPrompt = `You are a product ideation agent specializing in B2B SaaS. You have been given the top 3 customer problems ranked by ARR at risk from a Voice of Customer analysis of Notion.
+  const focusClause = trimmedFocus
+    ? `\n\nFOCUS INSTRUCTION: Anchor every idea to this specific theme and prompt — ${trimmedFocus}. Ideas for other themes may be included but should support the focus.`
+    : "";
+
+  const systemPrompt = `You are a product ideation agent specializing in B2B SaaS. You have been given the top 3 customer problems ranked by ARR at risk from a Voice of Customer analysis of Notion.${focusClause}
 
 Your job: generate one high-quality product idea per theme per lens — 4 lenses × 3 themes = 12 ideas total.
 
